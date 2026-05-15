@@ -52,26 +52,17 @@
     piano: { name: "piano", occupiable: false }
   };
 
-  const OBJECTS = window.__OBJECTS_DATA || [
-    { id: "bed", name: "cama" },
-    { id: "box", name: "caja" },
-    { id: "plant", name: "planta" },
-    { id: "shrub", name: "arbusto" }
+  const OBJECTS = [
+    { id: "box", png: false, name: "caja" },
+    { id: "plant", png: true, name: "planta" }
   ];
 
-  const TEXTURES = window.__TEXTURES_DATA
-    ? [{ id: "plain", name: "liso" }, ...window.__TEXTURES_DATA]
-    : [
-      { id: "plain",   name: "liso" },
-      { id: "dirt",    name: "tierra" },
-      { id: "wood",    name: "madera" },
-      { id: "ceramic",  name: "ceramica" },
-      { id: "grass",   name: "pasto" },
-      { id: "stone",   name: "piedra" },
-      { id: "sand",    name: "arena" },
-      { id: "water",   name: "agua" },
-      { id: "carpet",  name: "alfombra" }
-    ];
+  const TEXTURES = [
+    { id: "plain",      name: "liso", png: false },
+    { id: "grass",      name: "pasto", png: true },
+    { id: "white_wood", name: "madera blanca", png: true },
+    { id: "wood",       name: "madera", png: true }
+  ];
 
   const sampleCase = {
     id: "backyard-sample",
@@ -96,7 +87,7 @@
       [6,6,7,7,5,5]
     ],
     regionNames: ["terraza", "huerto", "estanque", "cobertizo", "patio", "sendero", "jardin", "pergola"],
-    regionTextures: ["ceramic", "dirt", "water", "wood", "stone", "sand", "grass", "wood"],
+    regionTextures: ["grass", "wood", "wood", "wood", "plain", "plain", "grass", "wood"],
     objects: {
       "0,0": { id: "table_left" },
       "0,4": { id: "plant" },

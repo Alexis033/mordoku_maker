@@ -10,7 +10,6 @@ const {
   TEXTURES,
   OBJECTS,
   DEFAULT_OBJECT_RULES,
-  DEFAULT_OBJECT_RULES,
   objectAssetForKey,
   sampleCase
 } = window.MurdokuCatalogs;
@@ -310,7 +309,7 @@ function renderZoneLegend() {
   const used = new Set(item.regions.flat().map((region) => Number(region) || 0));
   els.zoneLegend.innerHTML = Array.from(used).sort((a, b) => a - b).map((region) => `
       <span class="zone-key">
-        <span class="zone-swatch texture-swatch texture-${escapeAttr(regionTexture(item, region))}" style="--region-color:${escapeAttr(COLORS[region % COLORS.length])}"></span>
+        <span class="zone-swatch texture-swatch" style="--region-color:${escapeAttr(COLORS[region % COLORS.length])};${textureBg(regionTexture(item, region))}"></span>
         <span>${escapeHtml(regionName(item, region))}</span>
         <span class="zone-texture">${escapeHtml(textureName(regionTexture(item, region)))}</span>
       </span>
@@ -403,7 +402,7 @@ function renderEditorTools() {
       <div class="zone-legend editor-zone-legend">
         ${item.regionNames.map((name, index) => `
           <span class="zone-key">
-            <span class="zone-swatch texture-swatch texture-${escapeAttr(regionTexture(item, index))}" style="--region-color:${escapeAttr(COLORS[index % COLORS.length])}"></span>
+            <span class="zone-swatch texture-swatch" style="--region-color:${escapeAttr(COLORS[index % COLORS.length])};${textureBg(regionTexture(item, index))}"></span>
             <span>${escapeHtml(name)}</span>
             <span class="zone-texture">${escapeHtml(textureName(regionTexture(item, index)))}</span>
           </span>
@@ -621,7 +620,7 @@ function renderBoard() {
       button.dataset.col = String(col);
       const region = item.regions[row]?.[col] || 0;
       button.style.setProperty("--region-color", COLORS[region % COLORS.length]);
-      button.classList.add(`texture-${regionTexture(item, region)}`);
+      { const texId = regionTexture(item, region); if (texId === "plain") { button.classList.add("texture-plain"); } else { const url = textureUrlFor(texId); if (url) button.style.backgroundImage = `url(${url})`; } }
       button.classList.add(...cellBorderClasses(item, row, col, region));
       button.title = regionName(item, region);
       if (!cellCanBeOccupied(item, row, col)) button.classList.add("blocked");
@@ -630,6 +629,10 @@ function renderBoard() {
       if (checkMap[key]) button.classList.add(checkMap[key]);
       if (state.mode === "editor" && state.editorMode === "solution" && solutionAt(item, row, col)) {
         button.classList.add("solution-mark");
+      }
+      const mainObj = item.objects[key];
+      if (mainObj && typeof mainObj === "object" && !mainObj.ref && ((mainObj.w || 1) > 1 || (mainObj.h || 1) > 1)) {
+        button.style.zIndex = "2";
       }
       button.innerHTML = cellHtml(item, row, col);
       button.addEventListener("click", () => handleCellClick(row, col));
@@ -666,6 +669,9 @@ function cellHtml(item, row, col) {
     const sh = (rot % 180 !== 0) ? w : h;
     if (sw > 1 || sh > 1) {
       objStyle += `width:calc(var(--cell) * ${sw} - 12px);height:calc(var(--cell) * ${sh} - 12px);right:auto;bottom:auto;z-index:2;`;
+    }
+    if (sw === 1 && sh === 1 && (object.id.endsWith("_left") || object.id.endsWith("_right"))) {
+      objStyle += `inset:6px -6px;`;
     }
   }
   return `
@@ -848,8 +854,8 @@ function editCell(row, col) {
           if (k === anchorKey || (v && v.ref === anchorKey)) delete item.objects[k];
         }
       } else if (raw) {
-        const { w, h } = getObjectSize(raw.id);
-        const rot = raw.rotation || 0;
+        const { w, h } = getObjectSize(raw);
+        const rot = typeof raw === "object" ? (raw.rotation || 0) : 0;
         const sw = (rot % 180 !== 0) ? h : w;
         const sh = (rot % 180 !== 0) ? w : h;
         const [ar, ac] = key.split(",").map(Number);
@@ -1180,6 +1186,16 @@ function regionTexture(item, index) {
   return item.regionTextures[index] || "plain";
 }
 
+function textureUrlFor(id) {
+  if (id === "plain") return "";
+  const entry = TEXTURES.find((t) => t.id === id);
+  if (!entry) return "";
+  return `assets/textures/${id}.${entry.png ? "png" : "svg"}`;
+}
+function textureBg(id) {
+  const url = textureUrlFor(id);
+  return url ? `background-image:url(${url})` : "";
+}
 function textureName(id) {
   return TEXTURES.find((texture) => texture.id === id)?.name || id;
 }
@@ -1215,14 +1231,17 @@ function objectLabel(item, objectId) {
 
 function objectIcon(id, color) {
   function imgSrc(id) {
-    const known = OBJECTS.some((o) => o.id === id);
-    if (known) return `assets/objects/${escapeAttr(id)}.svg`;
+    const entry = OBJECTS.find((o) => o.id === id);
+    if (entry) return `assets/objects/${escapeAttr(id)}.${entry.png ? "png" : "svg"}`;
     const assetKey = objectAssetForKey(id);
-    return assetKey ? `assets/objects/${escapeAttr(assetKey)}.svg` : "";
+    if (!assetKey) return "";
+    const fallback = OBJECTS.find((o) => o.id === assetKey);
+    return `assets/objects/${escapeAttr(assetKey)}.${fallback?.png ? "png" : "svg"}`;
   }
   const src = imgSrc(id);
   if (src && color) {
-    return `<span class="obj-color-wrap"><img src="${src}" alt="" draggable="false"><span class="obj-color-overlay" style="background:${escapeAttr(color)}"></span></span>`;
+    const maskStyle = `-webkit-mask-image:url(${src});mask-image:url(${src})`;
+    return `<span class="obj-color-wrap"><img src="${src}" alt="" draggable="false"><span class="obj-color-overlay" style="background:${escapeAttr(color)};${maskStyle}"></span></span>`;
   }
   if (src) {
     return `<img src="${src}" alt="" draggable="false">`;
