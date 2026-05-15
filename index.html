@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Murdoku Studio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="src/textures.generated.css">
+    <link rel="stylesheet" href="src/objects.generated.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Murdoku Studio</p>
+          <h1 id="caseTitle">El jardin trasero</h1>
+        </div>
+        <div class="top-actions">
+          <select id="caseSelect" aria-label="Caso"></select>
+          <button id="duplicateCaseBtn" class="icon-button" type="button" title="Duplicar caso" aria-label="Duplicar caso">⧉</button>
+          <button id="deleteCaseBtn" class="icon-button danger" type="button" title="Borrar caso" aria-label="Borrar caso">×</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <div class="tabs" role="tablist" aria-label="Modo">
+            <button id="playTab" class="tab active" type="button">Jugar</button>
+            <button id="editorTab" class="tab" type="button">Editor</button>
+          </div>
+
+          <section id="playPanel" class="panel active" aria-label="Panel de juego">
+            <div class="stat-row">
+              <div>
+                <span class="label">Dificultad</span>
+                <strong id="difficultyLabel">Facil</strong>
+              </div>
+              <div>
+                <span class="label">Tiempo</span>
+                <strong id="timerLabel">00:00</strong>
+              </div>
+              <div>
+                <span class="label">Tablero</span>
+                <strong id="sizeLabel">6x6</strong>
+              </div>
+            </div>
+
+            <div id="statusBox" class="status-box status-top" role="status"></div>
+
+            <div class="tool-row">
+              <button id="noteToggle" class="segmented" type="button">Notas</button>
+              <button id="verifyBtn" type="button">Verificar</button>
+              <button id="revealBtn" type="button">Solucion</button>
+              <button id="resetBtn" class="ghost" type="button">Reiniciar</button>
+            </div>
+
+            <label class="field">
+              <span>Zoom</span>
+              <input id="zoomRange" type="range" min="44" max="88" value="68">
+            </label>
+
+            <h2>Zonas</h2>
+            <div id="zoneLegend" class="zone-legend"></div>
+
+            <h2>Objetos</h2>
+            <div id="objectLegend" class="object-legend"></div>
+
+            <h2>Sospechosos</h2>
+            <div id="suspectPalette" class="suspect-palette"></div>
+
+            <h2>Pistas</h2>
+            <ol id="clueList" class="clue-list"></ol>
+          </section>
+
+          <section id="editorPanel" class="panel" aria-label="Editor de casos">
+            <div class="editor-grid">
+              <label class="field">
+                <span>Titulo</span>
+                <input id="editTitle" type="text">
+              </label>
+              <label class="field">
+                <span>Dificultad</span>
+                <input id="editDifficulty" type="text">
+              </label>
+              <label class="field">
+                <span>Filas</span>
+                <input id="editRows" type="number" min="4" max="16">
+              </label>
+              <label class="field">
+                <span>Columnas</span>
+                <input id="editCols" type="number" min="4" max="16">
+              </label>
+              <label class="field">
+                <span>Victima</span>
+                <input id="editVictimName" type="text">
+              </label>
+            </div>
+
+            <div class="tool-row">
+              <button id="newCaseBtn" type="button">Nuevo</button>
+              <button id="saveCaseBtn" type="button">Guardar</button>
+              <button id="exportCaseBtn" class="ghost" type="button">Exportar caso</button>
+              <label class="file-button">
+                Importar
+                <input id="importCaseInput" type="file" accept="application/json">
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Sospechosos, uno por linea</span>
+              <textarea id="editSuspects" rows="6"></textarea>
+            </label>
+
+            <label class="field">
+              <span>Pistas, una por linea</span>
+              <textarea id="editClues" rows="5"></textarea>
+            </label>
+
+            <label class="field">
+              <span>Zonas, una por linea</span>
+              <textarea id="editRegions" rows="5"></textarea>
+            </label>
+
+            <div class="mode-group" aria-label="Herramientas del editor">
+              <button class="editor-mode active" data-mode="region" type="button">Zona</button>
+              <button class="editor-mode" data-mode="object" type="button">Objeto</button>
+              <button class="editor-mode" data-mode="victim" type="button">Victima</button>
+              <button class="editor-mode" data-mode="solution" type="button">Solucion</button>
+            </div>
+
+            <div id="editorTools" class="editor-tools"></div>
+            <div id="editorStatus" class="status-box"></div>
+          </section>
+        </aside>
+
+        <section class="board-stage" aria-label="Tablero">
+          <div class="board-toolbar">
+            <div id="selectedLabel" class="selected-label">Selecciona un sospechoso</div>
+            <button id="clearCellBtn" class="ghost" type="button">Vaciar tablero</button>
+          </div>
+          <div class="board-scroll">
+            <div id="board" class="board" aria-label="Tablero de murdoku"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="src/objects.generated.js"></script>
+    <script src="src/textures.generated.js"></script>
+    <script src="src/catalogs.js"></script>
+    <script src="src/utils.js"></script>
+    <script src="src/rules.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
