@@ -371,21 +371,14 @@ export function renderEditorTools() {
       <div class="region-palette">
         ${item.regionNames.map((name, index) => `
           <button class="region-button ${state.selectedRegion === index ? "active" : ""}" data-region="${index}" type="button">
-            <span class="swatch" style="background:${COLORS[index % COLORS.length]}"></span> ${escapeHtml(name)}
+            <span class="region-texture-swatch" style="${textureBg(regionTexture(item, index))}"></span>
+            <span class="region-button-label">${escapeHtml(name)}</span>
+            <span class="zone-texture">${escapeHtml(textureName(regionTexture(item, index)))}</span>
           </button>
         `).join("")}
       </div>
-      <div class="zone-legend editor-zone-legend">
-        ${item.regionNames.map((name, index) => `
-          <span class="zone-key">
-            <span class="zone-swatch texture-swatch" style="--region-color:${escapeAttr(COLORS[index % COLORS.length])};${textureBg(regionTexture(item, index))}"></span>
-            <span>${escapeHtml(name)}</span>
-            <span class="zone-texture">${escapeHtml(textureName(regionTexture(item, index)))}</span>
-          </span>
-        `).join("")}
-      </div>
       <label class="field texture-select-field">
-        <span>Textura para ${escapeHtml(regionName(item, state.selectedRegion))}</span>
+        <span>Textura para ${state.selectedRegion == null ? "—" : escapeHtml(regionName(item, state.selectedRegion))}</span>
         <div class="texture-select-row">
           <span class="texture-preview" id="texturePreview" style="${textureBg(regionTexture(item, state.selectedRegion))}"></span>
           <select id="regionTextureSelect">
