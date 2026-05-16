@@ -77,6 +77,7 @@ button.danger {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
+
 .topbar {
   display: flex;
   align-items: center;
@@ -842,6 +843,8 @@ h2 {
 
 .mode-group {
   margin: 12px 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
 }
 
 .editor-mode {
@@ -853,6 +856,10 @@ h2 {
 .editor-tools {
   display: grid;
   gap: 10px;
+}
+
+.editor-region-bar:not(:empty) {
+  margin-bottom: 8px;
 }
 
 .region-palette {
@@ -969,6 +976,15 @@ h2 {
 .solution-row strong {
   color: var(--muted);
   font-size: 12px;
+}
+
+.suspect-palette{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: flex-start;
+    flex-direction: row;
+    align-items: center;
 }
 
 .mini-victim {

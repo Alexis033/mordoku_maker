@@ -407,8 +407,10 @@ export function clearRegionHighlight() {
 export function renderEditorTools() {
   clearRegionHighlight();
   const item = currentCase();
+  els.suspectClueFields.style.display = state.editorMode === "solution" ? "" : "none";
+  els.editRegionsField.style.display = state.editorMode === "region" ? "" : "none";
   if (state.editorMode === "region") {
-    els.editorTools.innerHTML = `
+    els.editorRegionBar.innerHTML = `
       <div class="region-palette">
         ${item.regionNames.map((name, index) => `
           <button class="region-button ${state.selectedRegion === index ? "active" : ""}" data-region="${index}" type="button">
@@ -418,6 +420,18 @@ export function renderEditorTools() {
           </button>
         `).join("")}
       </div>
+    `;
+    els.editorRegionBar.querySelectorAll("[data-region]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.selectedRegion = Number(button.dataset.region);
+        renderEditorTools();
+      });
+      button.addEventListener("mouseenter", () => {
+        highlightRegion(item, Number(button.dataset.region));
+      });
+      button.addEventListener("mouseleave", clearRegionHighlight);
+    });
+    els.editorTools.innerHTML = `
       <label class="field texture-select-field">
         <span>Textura para ${state.selectedRegion == null ? "—" : escapeHtml(regionName(item, state.selectedRegion))}</span>
         <div class="texture-select-row">
@@ -441,16 +455,6 @@ export function renderEditorTools() {
       </label>
       <p class="label">Para eliminar una zona, borra su linea en el campo Zonas. Sus celdas vuelven a la primera zona.</p>
     `;
-    els.editorTools.querySelectorAll("[data-region]").forEach((button) => {
-      button.addEventListener("click", () => {
-        state.selectedRegion = Number(button.dataset.region);
-        renderEditorTools();
-      });
-      button.addEventListener("mouseenter", () => {
-        highlightRegion(item, Number(button.dataset.region));
-      });
-      button.addEventListener("mouseleave", clearRegionHighlight);
-    });
     const texturePreview = document.getElementById("texturePreview");
     const trigger = document.getElementById("textureDropdownTrigger");
     const panel = document.getElementById("textureDropdownPanel");
@@ -505,6 +509,7 @@ export function renderEditorTools() {
 
     els.editorTools.addEventListener("click", onEditorClick);
   } else if (state.editorMode === "object") {
+    els.editorRegionBar.innerHTML = "";
     els.editorTools.innerHTML = `
       <div class="object-palette">
         <button class="object-button ${!state.selectedObject ? "active" : ""}" data-object="" type="button">
@@ -584,6 +589,7 @@ export function renderEditorTools() {
     if (sizeW) sizeW.addEventListener("change", () => { state.selectedObjectW = Number(sizeW.value); });
     if (sizeH) sizeH.addEventListener("change", () => { state.selectedObjectH = Number(sizeH.value); });
   } else if (state.editorMode === "victim") {
+    els.editorRegionBar.innerHTML = "";
     els.editorTools.innerHTML = `
       <div class="solution-help">
         <strong>Victima</strong>
@@ -617,6 +623,7 @@ export function renderEditorTools() {
       setStatus(els.editorStatus, "Pista de victima actualizada.", "success");
     });
   } else {
+    els.editorRegionBar.innerHTML = "";
     els.editorTools.innerHTML = `
       <div class="solution-help">
         <strong>Como definir la solucion</strong>

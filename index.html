@@ -89,21 +89,6 @@
               </label>
             </div>
 
-            <label class="field">
-              <span>Sospechosos, uno por linea</span>
-              <textarea id="editSuspects" rows="6"></textarea>
-            </label>
-
-            <label class="field">
-              <span>Pistas, una por sospechoso</span>
-              <textarea id="editClues" rows="5"></textarea>
-            </label>
-
-            <label class="field">
-              <span>Zonas, una por linea</span>
-              <textarea id="editRegions" rows="5"></textarea>
-            </label>
-
             <div class="mode-group" aria-label="Herramientas del editor">
               <button class="editor-mode active" data-mode="region" type="button">Zona</button>
               <button class="editor-mode" data-mode="object" type="button">Objeto</button>
@@ -111,7 +96,28 @@
               <button class="editor-mode" data-mode="solution" type="button">Solucion</button>
             </div>
 
+            <div id="editorRegionBar" class="editor-region-bar"></div>
             <div id="editorTools" class="editor-tools"></div>
+
+            <div id="suspectClueFields">
+              <label class="field">
+                <span>Sospechosos, uno por linea</span>
+                <textarea id="editSuspects" rows="6"></textarea>
+              </label>
+
+              <label class="field">
+                <span>Pistas, una por sospechoso</span>
+                <textarea id="editClues" rows="5"></textarea>
+              </label>
+            </div>
+
+            <div id="editRegionsField">
+              <label class="field">
+                <span>Zonas, una por linea</span>
+                <textarea id="editRegions" rows="5"></textarea>
+              </label>
+            </div>
+
             <div id="editorStatus" class="status-box"></div>
           </section>
         </aside>

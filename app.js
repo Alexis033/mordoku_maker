@@ -19,7 +19,8 @@ function bindElements() {
     "resetBtn", "zoomRange", "zoneLegend", "objectLegend", "suspectCards", "statusBox",
     "editTitle", "editDifficulty", "editRows", "editCols",
     "generateCaseBtn", "newCaseBtn", "saveCaseBtn", "exportCaseBtn", "importCaseInput",
-    "editSuspects", "editClues", "editRegions", "editorTools", "editorStatus",
+    "editSuspects", "editClues", "editRegions", "editorTools", "editorRegionBar", "editorStatus",
+    "suspectClueFields", "editRegionsField",
     "board", "selectedLabel", "clearCellBtn"
   ].forEach((id) => els[id] = document.getElementById(id));
   els.editorModeButtons = Array.from(document.querySelectorAll(".editor-mode"));
