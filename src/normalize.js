@@ -1,12 +1,20 @@
 import { AVATARS, COLORS, TEXTURES, MAX_SIZE, MIN_SIZE, DEFAULT_OBJECT_RULES } from "./catalogs.js";
 import { clamp, makeId } from "./utils.js";
 
+export function guessGender(name) {
+  if (!name) return "male";
+  const last = name.trim().slice(-1).toLowerCase();
+  return "aáà" .includes(last) ? "female" : "male";
+}
+
 export function normalizeSuspects(suspects, size) {
   const base = suspects.length ? suspects : Array.from({ length: size }, (_, i) => ({ name: `Sospechoso ${i + 1}` }));
   return base.slice(0, MAX_SIZE).map((suspect, index) => ({
     id: suspect.id || makeId(suspect.name || `s${index + 1}`),
     name: suspect.name || `Sospechoso ${index + 1}`,
-    color: suspect.color || AVATARS[index % AVATARS.length]
+    color: suspect.color || AVATARS[index % AVATARS.length],
+    clue: suspect.clue || "",
+    gender: suspect.gender || guessGender(suspect.name)
   }));
 }
 
@@ -78,14 +86,19 @@ export function normalizeCase(input) {
   item.victim = item.victim || { name: "Victima", row: 0, col: 0 };
   item.victim.row = clamp(Number(item.victim.row) || 0, 0, item.rows - 1);
   item.victim.col = clamp(Number(item.victim.col) || 0, 0, item.cols - 1);
+  item.victim.clue = item.victim.clue || "";
   item.suspects = normalizeSuspects(item.suspects || [], Math.min(MAX_SIZE, Math.max(item.rows, item.cols)));
+  const oldClues = Array.isArray(item.clues) ? item.clues : [];
+  item.suspects.forEach((suspect, i) => {
+    if (!suspect.clue && oldClues[i]) suspect.clue = oldClues[i];
+  });
+  item.clues = item.suspects.map((s) => s.clue || "");
   item.regions = normalizeRegions(item.regions, item.rows, item.cols);
   item.regionNames = normalizeRegionNames(item.regionNames, item.regions);
   item.regionTextures = normalizeRegionTextures(item.regionTextures, item.regionNames.length);
   remapInvalidRegions(item);
   item.objects = item.objects || {};
   item.objectRules = normalizeObjectRules(item.objectRules, item.objects, true);
-  item.clues = Array.isArray(item.clues) ? item.clues : [];
   item.solution = item.solution || {};
   item.murderer = item.murderer || item.suspects[0]?.id || "";
   return item;

@@ -107,7 +107,6 @@ export function updateCaseTextFields() {
   const item = currentCase();
   item.title = els.editTitle.value.trim() || "Caso sin titulo";
   item.difficulty = els.editDifficulty.value.trim() || "Personalizado";
-  item.victim.name = els.editVictimName.value.trim() || "Victima";
   saveCases();
   renderHeader();
   renderCaseSelect();
@@ -125,8 +124,10 @@ export function updateCaseSuspects() {
   item.suspects = normalizeSuspects(names.map((name, index) => ({
     id: item.suspects[index]?.id || makeId(name),
     name,
-    color: item.suspects[index]?.color || AVATARS[index % AVATARS.length]
+    color: item.suspects[index]?.color || AVATARS[index % AVATARS.length],
+    clue: item.suspects[index]?.clue || ""
   })), Math.min(MAX_SIZE, Math.max(item.rows, item.cols)));
+  els.editClues.value = item.suspects.map((s) => s.clue || "").join("\n");
   item.solution = Object.fromEntries(Object.entries(item.solution).filter(([id]) => (
     item.suspects.some((suspect) => suspect.id === id)
   )));
@@ -145,7 +146,10 @@ export function updateCaseSuspects() {
 export function updateCaseClues() {
   if (state.mode !== "editor") return;
   const item = currentCase();
-  item.clues = els.editClues.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const clueLines = els.editClues.value.split(/\r?\n/).map((line) => line.trim());
+  item.suspects.forEach((suspect, i) => {
+    suspect.clue = clueLines[i] || "";
+  });
   saveCases();
   setStatus(els.editorStatus, "Pistas actualizadas.", "success");
 }
@@ -213,15 +217,15 @@ export function saveEditorCase() {
   const nextCols = clamp(Number(els.editCols.value) || item.cols, MIN_SIZE, MAX_SIZE);
   item.title = els.editTitle.value.trim() || "Caso sin titulo";
   item.difficulty = els.editDifficulty.value.trim() || "Personalizado";
-  item.victim.name = els.editVictimName.value.trim() || "Victima";
   if (nextRows !== item.rows || nextCols !== item.cols) resizeCase(item, nextRows, nextCols);
   const names = els.editSuspects.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const clueLines = els.editClues.value.split(/\r?\n/).map((line) => line.trim());
   item.suspects = normalizeSuspects(names.map((name, index) => ({
     id: item.suspects[index]?.id || makeId(name),
     name,
-    color: item.suspects[index]?.color || AVATARS[index % AVATARS.length]
+    color: item.suspects[index]?.color || AVATARS[index % AVATARS.length],
+    clue: clueLines[index] || ""
   })), Math.min(MAX_SIZE, Math.max(nextRows, nextCols)));
-  item.clues = els.editClues.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   item.regionNames = parseRegionNames(els.editRegions.value);
   item.solution = Object.fromEntries(Object.entries(item.solution).filter(([id, pos]) => (
     item.suspects.some((suspect) => suspect.id === id) && pos.row < item.rows && pos.col < item.cols
@@ -247,9 +251,9 @@ export function createNewCase() {
     suspects: Array.from({ length: suspectCount }, (_, index) => ({
       id: `s${index + 1}`,
       name: `Sospechoso ${index + 1}`,
-      color: AVATARS[index % AVATARS.length]
+      color: AVATARS[index % AVATARS.length],
+      clue: index === 0 ? "Cada sospechoso ocupa una fila y una columna distintas." : ""
     })),
-    clues: ["Cada sospechoso ocupa una fila y una columna distintas."],
     regionNames: normalizeRegionNames(null, null),
     regionTextures: normalizeRegionTextures(null, 1),
     objectRules: DEFAULT_OBJECT_RULES,

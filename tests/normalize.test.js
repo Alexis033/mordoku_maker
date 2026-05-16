@@ -142,7 +142,7 @@ describe("normalizeCase", () => {
     expect(result.cols).toBe(6);
     expect(result.suspects).toHaveLength(6);
     expect(result.regions).toHaveLength(6);
-    expect(result.clues).toEqual([]);
+    expect(result.suspects[0].clue).toBe("");
     expect(result.solution).toEqual({});
     expect(result.murderer).toBe(result.suspects[0].id);
   });
@@ -162,9 +162,11 @@ describe("normalizeCase", () => {
     expect(result.title).toBe("Test Case");
     expect(result.rows).toBe(4);
     expect(result.suspects).toHaveLength(2);
+    expect(result.suspects[0].clue).toBe("Clue 1");
+    expect(result.suspects[1].clue).toBe("");
     expect(result.victim.row).toBe(2);
     expect(result.victim.col).toBe(1);
-    expect(result.clues).toEqual(["Clue 1"]);
+    expect(result.clues).toEqual(["Clue 1", ""]);
     expect(result.solution.ana).toEqual({ row: 0, col: 0 });
   });
 
@@ -176,5 +178,13 @@ describe("normalizeCase", () => {
     });
     expect(result.victim.row).toBe(3);
     expect(result.victim.col).toBe(0);
+  });
+
+  it("preserves clue on each suspect", () => {
+    const result = normalizeCase({
+      suspects: [{ name: "Ana", clue: "Viste a Ana" }, { name: "Bruno" }],
+    });
+    expect(result.suspects[0].clue).toBe("Viste a Ana");
+    expect(result.suspects[1].clue).toBe("");
   });
 });

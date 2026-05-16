@@ -225,46 +225,84 @@ export function renderBoard() {
   }
 }
 
+const MALE_SVG = `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 22Q12 6 40 4Q68 6 68 22Q58 18 40 16Q22 18 12 22Z" fill="currentColor"/>
+  <ellipse cx="40" cy="30" rx="26" ry="22" fill="currentColor"/>
+  <rect x="12" y="24" width="5" height="9" rx="2" fill="currentColor"/>
+  <rect x="63" y="24" width="5" height="9" rx="2" fill="currentColor"/>
+  <rect x="36" y="52" width="8" height="8" rx="2" fill="currentColor"/>
+  <path d="M4 100Q14 60 36 60L44 60Q66 60 76 100Z" fill="currentColor"/>
+</svg>`;
+
+const FEMALE_SVG = `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg">
+  <path d="M14 22Q14 6 40 4Q66 6 66 22Q58 18 40 16Q22 18 14 22Z" fill="currentColor"/>
+  <path d="M14 24Q8 55 16 80Q22 92 28 94Q24 80 20 60Q18 40 22 26Z" fill="currentColor"/>
+  <path d="M66 24Q72 55 64 80Q58 92 52 94Q56 80 60 60Q62 40 58 26Z" fill="currentColor"/>
+  <ellipse cx="40" cy="30" rx="24" ry="20" fill="currentColor"/>
+  <rect x="36" y="50" width="8" height="6" rx="2" fill="currentColor"/>
+  <path d="M12 100Q20 56 36 56L44 56Q60 56 68 100Z" fill="currentColor"/>
+</svg>`;
+
+export function renderSuspectCards() {
+  const item = currentCase();
+  const victimCard = `
+    <button class="suspect-card${state.selectedSuspect === "__victim__" ? " active" : ""}" data-victim-piece="true" type="button">
+      <div class="card-photo card-photo-victim">${FEMALE_SVG}</div>
+      <div class="card-name">${escapeHtml(item.victim.name || "Victima")}</div>
+      ${item.victim.clue ? `<div class="card-clue">${escapeHtml(item.victim.clue)}</div>` : ""}
+    </button>
+  `;
+  const suspectCards = item.suspects.map((suspect) => `
+    <button class="suspect-card${state.selectedSuspect === suspect.id ? " active" : ""}" data-suspect="${escapeAttr(suspect.id)}" type="button">
+      <div class="card-photo">${suspect.gender === "female" ? FEMALE_SVG : MALE_SVG}</div>
+      <div class="card-name">${escapeHtml(suspect.name)}</div>
+      ${suspect.clue ? `<div class="card-clue">${escapeHtml(suspect.clue)}</div>` : ""}
+    </button>
+  `).join("");
+  els.suspectCards.innerHTML = victimCard + suspectCards;
+  els.suspectCards.querySelector("[data-victim-piece]")?.addEventListener("click", () => {
+    state.selectedSuspect = "__victim__";
+    renderBoard();
+    renderSuspectCards();
+    renderSelectedLabel();
+  });
+  els.suspectCards.querySelectorAll("[data-suspect]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedSuspect = button.dataset.suspect;
+      renderBoard();
+      renderSuspectCards();
+      renderSelectedLabel();
+    });
+  });
+}
+
 export function renderZoneLegend() {
   const item = currentCase();
-  const used = new Set(item.regions.flat().map((region) => Number(region) || 0));
+  const used = new Set(item.regions.flat());
   els.zoneLegend.innerHTML = Array.from(used).sort((a, b) => a - b).map((region) => `
-      <span class="zone-key">
-        <span class="zone-swatch texture-swatch" style="--region-color:${escapeAttr(COLORS[region % COLORS.length])};${textureBg(regionTexture(item, region))}"></span>
-        <span>${escapeHtml(regionName(item, region))}</span>
-        <span class="zone-texture">${escapeHtml(textureName(regionTexture(item, region)))}</span>
-      </span>
+    <span class="zone-key">
+      <span class="zone-swatch" style="background:${COLORS[region % COLORS.length]}"></span>
+      <span>${escapeHtml(item.regionNames[region] || `Zona ${region + 1}`)}</span>
+    </span>
   `).join("");
 }
 
 export function renderObjectLegend() {
   const item = currentCase();
-  const seen = new Set();
-  const used = Object.values(item.objects || {}).filter((v) => {
-    if (!v || v.ref) return false;
-    const id = typeof v === "string" ? v : v.id;
-    if (seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  });
-  els.objectLegend.innerHTML = used.length ? used.map((obj) => {
+  const used = Object.keys(item.objects).map((key) => item.objects[key]);
+  const unique = new Map();
+  used.forEach((obj) => {
     const id = typeof obj === "string" ? obj : obj.id;
-    const blocked = !objectCanBeOccupied(item, id);
-    return `
-      <span class="object-key">
-        <span class="legend-object-icon ${blocked ? "blocked-object" : ""}">${objectIcon(id, null)}</span>
-        <span>${escapeHtml(objectLabel(item, id))}</span>
-        <span class="object-rule">${blocked ? "bloqueado" : "ocupable"}</span>
-      </span>
-    `;
+    if (!id) return;
+    if (!unique.has(id)) unique.set(id, obj);
+  });
+  els.objectLegend.innerHTML = unique.size ? Array.from(unique.values()).map((obj) => {
+    const id = typeof obj === "string" ? obj : obj.id;
+    return `<span class="object-key">
+      <span class="legend-object-icon">${objectAssetForKey(id)}</span>
+      <span>${escapeHtml(id)}</span>
+    </span>`;
   }).join("") : `<span class="empty-legend">Sin objetos en este caso.</span>`;
-}
-
-export function renderClues() {
-  const item = currentCase();
-  els.clueList.innerHTML = item.clues.length
-    ? item.clues.map((clue) => `<li>${escapeHtml(clue)}</li>`).join("")
-    : "<li>Sin pistas escritas todavia.</li>";
 }
 
 export function renderSelectedLabel() {
@@ -274,44 +312,12 @@ export function renderSelectedLabel() {
   else els.selectedLabel.textContent = suspect ? `Seleccionado: ${suspect.name}` : "Selecciona un sospechoso";
 }
 
-export function renderPalette() {
-  const item = currentCase();
-  els.suspectPalette.innerHTML = `
-    <button class="suspect-chip victim-chip ${state.selectedSuspect === "__victim__" ? "active" : ""}" data-victim-piece="true" type="button">
-      <span class="victim-dot">${escapeHtml((item.victim.name || "V").slice(0, 1))}</span>
-      <span class="chip-name">${escapeHtml(item.victim.name || "Victima")}</span>
-    </button>
-  ` + item.suspects.map((suspect) => `
-    <button class="suspect-chip ${state.selectedSuspect === suspect.id ? "active" : ""}" data-suspect="${escapeAttr(suspect.id)}" type="button">
-      <span class="swatch" style="background:${escapeAttr(suspect.color)}"></span>
-      <span class="chip-name">${escapeHtml(suspect.name)}</span>
-    </button>
-  `).join("");
-  els.suspectPalette.querySelector("[data-victim-piece]")?.addEventListener("click", () => {
-    state.selectedSuspect = "__victim__";
-    renderBoard();
-    renderPalette();
-    renderSelectedLabel();
-  });
-  els.suspectPalette.querySelectorAll("[data-suspect]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedSuspect = button.dataset.suspect;
-      renderBoard();
-      renderPalette();
-      renderSelectedLabel();
-    });
-  });
-}
-
 export function renderPlayPanel() {
   const item = currentCase();
   els.difficultyLabel.textContent = item.difficulty;
   els.sizeLabel.textContent = `${item.rows}x${item.cols}`;
   els.revealBtn.textContent = state.reveal ? "Ocultar" : "Solucion";
-  renderPalette();
-  renderZoneLegend();
-  renderObjectLegend();
-  renderClues();
+  renderSuspectCards();
   renderSelectedLabel();
   updateTimerLabel();
   if (!state.lastCheck) {
@@ -345,7 +351,7 @@ export function renderEditorPanel() {
   els.editRows.value = item.rows;
   els.editCols.value = item.cols;
   els.editSuspects.value = item.suspects.map((suspect) => suspect.name).join("\n");
-  els.editClues.value = item.clues.join("\n");
+  els.editClues.value = item.suspects.map((suspect) => suspect.clue || "").join("\n");
   els.editRegions.value = item.regionNames.join("\n");
   renderEditorModeButtons();
   renderEditorTools();
@@ -493,6 +499,10 @@ export function renderEditorTools() {
         <span>Nombre de la victima</span>
         <input id="victimToolName" type="text" value="${escapeAttr(item.victim.name)}">
       </label>
+      <label class="field">
+        <span>Pista de la victima</span>
+        <input id="victimClueInput" type="text" value="${escapeAttr(item.victim.clue || "")}">
+      </label>
       <div class="solution-row">
         <span class="cell-victim mini-victim">${escapeHtml((item.victim.name || "V").slice(0, 1))}</span>
         <span>${escapeHtml(item.victim.name || "Victima")}</span>
@@ -502,10 +512,15 @@ export function renderEditorTools() {
     const victimToolName = document.getElementById("victimToolName");
     victimToolName?.addEventListener("input", () => {
       item.victim.name = victimToolName.value.trim() || "Victima";
-      els.editVictimName.value = item.victim.name;
       saveCases();
       renderBoard();
       setStatus(els.editorStatus, "Victima actualizada.", "success");
+    });
+    const victimClueInput = document.getElementById("victimClueInput");
+    victimClueInput?.addEventListener("input", () => {
+      item.victim.clue = victimClueInput.value.trim();
+      saveCases();
+      setStatus(els.editorStatus, "Pista de victima actualizada.", "success");
     });
   } else {
     els.editorTools.innerHTML = `

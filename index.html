@@ -21,6 +21,20 @@
       </header>
 
       <main class="workspace">
+        <section class="board-stage" aria-label="Tablero">
+          <div class="board-toolbar">
+            <div id="selectedLabel" class="selected-label">Selecciona un sospechoso</div>
+            <button id="clearCellBtn" class="ghost" type="button">Vaciar tablero</button>
+          </div>
+          <label class="board-zoom">
+            <span>Zoom</span>
+            <input id="zoomRange" type="range" min="44" max="88" value="68">
+          </label>
+          <div class="board-scroll">
+            <div id="board" class="board" aria-label="Tablero de murdoku"></div>
+          </div>
+        </section>
+
         <aside class="sidebar">
           <div class="tabs" role="tablist" aria-label="Modo">
             <button id="playTab" class="tab active" type="button">Jugar</button>
@@ -51,11 +65,6 @@
               <button id="resetBtn" class="ghost" type="button">Reiniciar</button>
             </div>
 
-            <label class="field">
-              <span>Zoom</span>
-              <input id="zoomRange" type="range" min="44" max="88" value="68">
-            </label>
-
             <h2>Zonas</h2>
             <div id="zoneLegend" class="zone-legend"></div>
 
@@ -63,10 +72,7 @@
             <div id="objectLegend" class="object-legend"></div>
 
             <h2>Sospechosos</h2>
-            <div id="suspectPalette" class="suspect-palette"></div>
-
-            <h2>Pistas</h2>
-            <ol id="clueList" class="clue-list"></ol>
+            <div id="suspectCards" class="suspect-cards"></div>
           </section>
 
           <section id="editorPanel" class="panel" aria-label="Editor de casos">
@@ -105,7 +111,7 @@
             </label>
 
             <label class="field">
-              <span>Pistas, una por linea</span>
+              <span>Pistas, una por sospechoso</span>
               <textarea id="editClues" rows="5"></textarea>
             </label>
 
@@ -125,16 +131,6 @@
             <div id="editorStatus" class="status-box"></div>
           </section>
         </aside>
-
-        <section class="board-stage" aria-label="Tablero">
-          <div class="board-toolbar">
-            <div id="selectedLabel" class="selected-label">Selecciona un sospechoso</div>
-            <button id="clearCellBtn" class="ghost" type="button">Vaciar tablero</button>
-          </div>
-          <div class="board-scroll">
-            <div id="board" class="board" aria-label="Tablero de murdoku"></div>
-          </div>
-        </section>
       </main>
     </div>
 

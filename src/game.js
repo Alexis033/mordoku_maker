@@ -1,5 +1,5 @@
 import { state, els, currentCase } from "./state.js";
-import { renderBoard, renderPlayPanel, renderSelectedLabel, renderPalette, renderClues, renderAll, renderHeader, renderCaseSelect, setStatus } from "./render.js";
+import { renderBoard, renderPlayPanel, renderSelectedLabel, renderAll, renderHeader, renderCaseSelect, setStatus } from "./render.js";
 import { cellCanBeOccupied } from "./render.js";
 import { persistProgress, saveCases } from "./persist.js";
 import { cellKey, formatSeconds } from "./utils.js";

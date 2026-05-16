@@ -16,7 +16,7 @@ function bindElements() {
     "caseTitle", "caseSelect", "duplicateCaseBtn", "deleteCaseBtn",
     "playTab", "editorTab", "playPanel", "editorPanel", "difficultyLabel",
     "timerLabel", "sizeLabel", "verifyBtn", "revealBtn",
-    "resetBtn", "zoomRange", "zoneLegend", "objectLegend", "suspectPalette", "clueList", "statusBox",
+    "resetBtn", "zoomRange", "zoneLegend", "objectLegend", "suspectCards", "statusBox",
     "editTitle", "editDifficulty", "editRows", "editCols",
     "newCaseBtn", "saveCaseBtn", "exportCaseBtn", "importCaseInput",
     "editSuspects", "editClues", "editRegions", "editorTools", "editorStatus",
