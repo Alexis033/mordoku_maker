@@ -15,9 +15,9 @@ function bindElements() {
   [
     "caseTitle", "caseSelect", "duplicateCaseBtn", "deleteCaseBtn",
     "playTab", "editorTab", "playPanel", "editorPanel", "difficultyLabel",
-    "timerLabel", "sizeLabel", "noteToggle", "verifyBtn", "revealBtn",
+    "timerLabel", "sizeLabel", "verifyBtn", "revealBtn",
     "resetBtn", "zoomRange", "zoneLegend", "objectLegend", "suspectPalette", "clueList", "statusBox",
-    "editTitle", "editDifficulty", "editRows", "editCols", "editVictimName",
+    "editTitle", "editDifficulty", "editRows", "editCols",
     "newCaseBtn", "saveCaseBtn", "exportCaseBtn", "importCaseInput",
     "editSuspects", "editClues", "editRegions", "editorTools", "editorStatus",
     "board", "selectedLabel", "clearCellBtn"
@@ -33,10 +33,6 @@ function bindEvents() {
   });
   els.playTab.addEventListener("click", () => switchMode("play"));
   els.editorTab.addEventListener("click", () => switchMode("editor"));
-  els.noteToggle.addEventListener("click", () => {
-    state.noteMode = !state.noteMode;
-    renderPlayPanel();
-  });
   els.verifyBtn.addEventListener("click", verifyBoard);
   els.revealBtn.addEventListener("click", () => {
     state.reveal = !state.reveal;
@@ -97,7 +93,6 @@ function bindEvents() {
   els.importCaseInput.addEventListener("change", importCase);
   els.editTitle.addEventListener("input", updateCaseTextFields);
   els.editDifficulty.addEventListener("input", updateCaseTextFields);
-  els.editVictimName.addEventListener("input", updateCaseTextFields);
   els.editSuspects.addEventListener("input", updateCaseSuspects);
   els.editClues.addEventListener("input", updateCaseClues);
   els.editRegions.addEventListener("input", updateCaseRegions);

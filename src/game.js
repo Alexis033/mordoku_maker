@@ -34,7 +34,6 @@ function removeExistingPlacement(suspectId) {
   for (const [key, placedSuspect] of Object.entries(state.board)) {
     if (placedSuspect === suspectId) {
       delete state.board[key];
-      delete state.notes[key];
     }
   }
 }
@@ -53,7 +52,6 @@ export function handleCellClick(row, col) {
   const key = cellKey(row, col);
   if (!state.selectedSuspect && (state.board[key] || state.victimGuess === key)) {
     delete state.board[key];
-    delete state.notes[key];
     if (state.victimGuess === key) state.victimGuess = "";
     state.lastCheck = null;
     persistProgress(elapsedSeconds());
@@ -91,7 +89,7 @@ export function handleCellClick(row, col) {
     setStatus(els.statusBox, "Esa celda ya tiene la victima. Vaciala antes de colocar un sospechoso.", "warning");
     return;
   }
-  if (!state.noteMode && cellBlockedByPlacedLine({
+  if (cellBlockedByPlacedLine({
     board: state.board, cellKey,
     row, col, movingPiece: state.selectedSuspect,
     victimGuess: state.victimGuess
@@ -99,19 +97,11 @@ export function handleCellClick(row, col) {
     setStatus(els.statusBox, "No puedes colocar ahi: esa fila o columna ya esta ocupada.", "warning");
     return;
   }
-  if (state.noteMode) {
-    const notes = new Set(state.notes[key] || []);
-    if (notes.has(state.selectedSuspect)) notes.delete(state.selectedSuspect);
-    else notes.add(state.selectedSuspect);
-    state.notes[key] = Array.from(notes);
+  if (state.board[key] === state.selectedSuspect) {
+    delete state.board[key];
   } else {
-    if (state.board[key] === state.selectedSuspect) {
-      delete state.board[key];
-    } else {
-      removeExistingPlacement(state.selectedSuspect);
-      state.board[key] = state.selectedSuspect;
-    }
-    delete state.notes[key];
+    removeExistingPlacement(state.selectedSuspect);
+    state.board[key] = state.selectedSuspect;
   }
   state.lastCheck = null;
   persistProgress(elapsedSeconds());
@@ -162,7 +152,6 @@ export function verifyBoard() {
 
 export function resetProgress() {
   state.board = {};
-  state.notes = {};
   state.victimGuess = "";
   state.startedAt = null;
   state.elapsedBeforePause = 0;

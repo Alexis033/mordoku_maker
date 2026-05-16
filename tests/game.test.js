@@ -50,7 +50,6 @@ beforeEach(() => {
   state.caseId = "test-case";
   state.mode = "play";
   state.board = {};
-  state.notes = {};
   state.victimGuess = "";
   state.selectedSuspect = null;
   state.lastCheck = null;
@@ -116,7 +115,6 @@ describe("handleCellClick", () => {
 describe("resetProgress", () => {
   it("clears all play state", () => {
     state.board = { "0,0": "ana" };
-    state.notes = { "0,1": ["ana"] };
     state.victimGuess = "2,2";
     state.elapsedBeforePause = 500;
     state.lastCheck = { cells: {} };
@@ -125,7 +123,6 @@ describe("resetProgress", () => {
     resetProgress();
 
     expect(state.board).toEqual({});
-    expect(state.notes).toEqual({});
     expect(state.victimGuess).toBe("");
     expect(state.elapsedBeforePause).toBe(0);
     expect(state.lastCheck).toBeNull();
@@ -134,7 +131,7 @@ describe("resetProgress", () => {
 });
 
 describe("clearBoardPieces", () => {
-  it("clears board and victim but keeps notes and timer", () => {
+  it("clears board and victim but keeps timer", () => {
     state.board = { "0,0": "ana" };
     state.victimGuess = "2,2";
     state.lastCheck = { cells: {} };

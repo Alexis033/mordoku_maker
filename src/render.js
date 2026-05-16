@@ -151,7 +151,6 @@ export function cellHtml(item, row, col) {
   const victimKey = state.reveal ? cellKey(item.victim.row, item.victim.col) : state.victimGuess;
   const hasVictim = (state.mode === "editor" && item.victim.row === row && item.victim.col === col) ||
     (state.mode === "play" && victimKey === key);
-  const notes = state.notes[key] || [];
   let objStyle = object?.rotation ? `--obj-rotation:${object.rotation}deg;` : "";
   if (object) {
     const { w, h } = getObjectSize(object);
@@ -171,8 +170,6 @@ export function cellHtml(item, row, col) {
         <span class="avatar" style="--avatar:${escapeAttr(suspect.color)}"></span>
         <span class="person-name">${escapeHtml(suspect.name)}</span>
       </span>
-    ` : notes.length ? `
-      <span class="notes">${notes.slice(0, 16).map((id) => `<span>${escapeHtml(shortName(item, id))}</span>`).join("")}</span>
     ` : ""}
   `;
 }
@@ -310,7 +307,6 @@ export function renderPlayPanel() {
   const item = currentCase();
   els.difficultyLabel.textContent = item.difficulty;
   els.sizeLabel.textContent = `${item.rows}x${item.cols}`;
-  els.noteToggle.classList.toggle("active", state.noteMode);
   els.revealBtn.textContent = state.reveal ? "Ocultar" : "Solucion";
   renderPalette();
   renderZoneLegend();
@@ -348,7 +344,6 @@ export function renderEditorPanel() {
   els.editDifficulty.value = item.difficulty;
   els.editRows.value = item.rows;
   els.editCols.value = item.cols;
-  els.editVictimName.value = item.victim.name;
   els.editSuspects.value = item.suspects.map((suspect) => suspect.name).join("\n");
   els.editClues.value = item.clues.join("\n");
   els.editRegions.value = item.regionNames.join("\n");

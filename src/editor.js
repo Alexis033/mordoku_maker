@@ -201,10 +201,6 @@ export function resizeCase(item, rows, cols = rows) {
     const [row, col] = key.split(",").map(Number);
     return row < rows && col < cols;
   }));
-  state.notes = Object.fromEntries(Object.entries(state.notes || {}).filter(([key]) => {
-    const [row, col] = key.split(",").map(Number);
-    return row < rows && col < cols;
-  }));
   if (state.victimGuess) {
     const [row, col] = state.victimGuess.split(",").map(Number);
     if (row >= rows || col >= cols) state.victimGuess = "";
@@ -331,7 +327,6 @@ export function loadCurrentCase(id) {
   const progress = readJson(PROGRESS_KEY) || {};
   const current = progress[id] || {};
   state.board = uniqueBoardPlacements(current.board || {});
-  state.notes = current.notes || {};
   state.victimGuess = current.victimGuess || "";
   state.elapsedBeforePause = current.elapsed || 0;
   state.startedAt = null;
