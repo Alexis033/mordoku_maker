@@ -568,9 +568,16 @@ h2 {
   border-left: 3px solid #050708;
 }
 
-.cell.zone-focus {
-  outline: 3px solid rgba(68, 114, 196, 0.65);
-  outline-offset: -2px;
+.cell.zone-focus::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  border-top: var(--focus-top, 0) solid rgba(0, 110, 255, 0.9);
+  border-right: var(--focus-right, 0) solid rgba(0, 110, 255, 0.9);
+  border-bottom: var(--focus-bottom, 0) solid rgba(0, 110, 255, 0.9);
+  border-left: var(--focus-left, 0) solid rgba(0, 110, 255, 0.9);
 }
 
 .cell.texture-plain {
