@@ -19,7 +19,6 @@
 body {
   margin: 0;
   min-height: 100vh;
-  overflow: hidden;
   color: var(--ink);
   background:
     linear-gradient(90deg, rgba(40,111,108,.08), transparent 34%),
@@ -72,11 +71,10 @@ button.danger {
 }
 
 .app-shell {
-  height: 100vh;
+  min-height: 100vh;
   padding: 20px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
 .topbar {
@@ -945,6 +943,13 @@ h2 {
   .tool-row > .file-button {
     flex: 1 1 130px;
   }
+
+  .app-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+  }
 }
 
 .rotation-controls {
@@ -986,4 +991,78 @@ h2 {
   font-size: 14px;
   background: #fff;
   color: var(--ink);
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.25rem 2rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.footer-logo {
+  display: grid;
+  place-items: center;
+}
+
+.footer-logo img {
+  height: 28px;
+  width: auto;
+  opacity: 0.6;
+  transition: opacity 0.25s ease;
+}
+
+.footer-logo:hover img {
+  opacity: 1;
+}
+
+.app-footer p {
+  font-size: 0.85em;
+  color: var(--muted);
+  margin: 0;
+}
+
+.footer-attribution {
+  width: 100%;
+  text-align: center;
+  font-size: 0.75em !important;
+}
+
+.footer-attribution a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.footer-attribution a:hover {
+  text-decoration: underline;
+}
+
+.footer-links {
+  display: flex;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.footer-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--paper);
+  transition: all 0.25s ease;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+  background: var(--line);
+  transform: translateY(-2px);
 }

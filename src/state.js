@@ -15,9 +15,10 @@ export const state = {
   victimGuess: "",
   lastCheck: null,
   lastSavedCases: null,
-  timerStartedAt: null,
-  timerElapsedBefore: 0,
-  timerInterval: null
+  reveal: false,
+  startedAt: null,
+  elapsedBeforePause: 0,
+  timer: null
 };
 
 export const els = {};
