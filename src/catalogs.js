@@ -58,10 +58,29 @@ export const OBJECTS = [
 ];
 
 export const TEXTURES = [
-  { id: "plain",      name: "liso", png: false },
-  { id: "grass",      name: "pasto", png: true },
-  { id: "white_wood", name: "madera blanca", png: true },
-  { id: "wood",       name: "madera", png: true }
+  { id: "plain",                 name: "liso",              png: false },
+  { id: "grass",                 name: "pasto",             png: true },
+  { id: "wood",                  name: "madera",            png: true },
+  { id: "light_wood",            name: "madera clara",      png: true },
+  { id: "dark_wood",             name: "madera oscura",     png: true },
+  { id: "gray_wood",             name: "madera gris",       png: true },
+  { id: "hardwood_floor",        name: "parquet",           png: true },
+  { id: "dark_hardwood_floor",   name: "parquet oscuro",    png: true },
+  { id: "white_terrazzo",        name: "terrazo blanco",    png: true },
+  { id: "black_terrazzo",        name: "terrazo negro",     png: true },
+  { id: "terrazzo",              name: "terrazo",           png: true },
+  { id: "tile",                  name: "azulejo",           png: true },
+  { id: "mosaic_tile",           name: "azulejo mosaico",   png: true },
+  { id: "brick",                 name: "ladrillo",          png: true },
+  { id: "dark_brick",            name: "ladrillo oscuro",   png: true },
+  { id: "stone_path",            name: "camino de piedra",  png: true },
+  { id: "dark_stone",            name: "piedra oscura",     png: true },
+  { id: "sand",                  name: "arena",             png: true },
+  { id: "mud",                   name: "barro",             png: true },
+  { id: "dark_earth",            name: "tierra oscura",     png: true },
+  { id: "water",                 name: "agua",              png: true },
+  { id: "dark_water",            name: "agua oscura",       png: true },
+  { id: "water_plant",           name: "planta de agua",    png: true }
 ];
 
 export function objectAssetForKey(key) {

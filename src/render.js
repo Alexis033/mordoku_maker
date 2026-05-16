@@ -384,15 +384,18 @@ export function renderEditorTools() {
           </span>
         `).join("")}
       </div>
-      <label class="field">
+      <label class="field texture-select-field">
         <span>Textura para ${escapeHtml(regionName(item, state.selectedRegion))}</span>
-        <select id="regionTextureSelect">
-          ${TEXTURES.map((texture) => `
-            <option value="${escapeAttr(texture.id)}"${texture.id === regionTexture(item, state.selectedRegion) ? " selected" : ""}>
-              ${escapeHtml(texture.name)}
-            </option>
-          `).join("")}
-        </select>
+        <div class="texture-select-row">
+          <span class="texture-preview" id="texturePreview" style="${textureBg(regionTexture(item, state.selectedRegion))}"></span>
+          <select id="regionTextureSelect">
+            ${[...TEXTURES].sort((a, b) => a.name.localeCompare(b.name)).map((texture) => `
+              <option value="${escapeAttr(texture.id)}"${texture.id === regionTexture(item, state.selectedRegion) ? " selected" : ""}>
+                ${escapeHtml(texture.name)}
+              </option>
+            `).join("")}
+          </select>
+        </div>
       </label>
       <p class="label">Para eliminar una zona, borra su linea en el campo Zonas. Sus celdas vuelven a la primera zona.</p>
     `;
@@ -403,8 +406,16 @@ export function renderEditorTools() {
       });
     });
     const textureSelect = document.getElementById("regionTextureSelect");
+    const texturePreview = document.getElementById("texturePreview");
     textureSelect?.addEventListener("change", () => {
       item.regionTextures[state.selectedRegion] = textureSelect.value;
+      if (texturePreview) {
+        const tex = textureSelect.value;
+        const isPlain = tex === "plain";
+        texturePreview.style.backgroundImage = isPlain ? "none" : `url(${textureUrlFor(tex)})`;
+        texturePreview.style.backgroundColor = isPlain ? "var(--panel)" : "";
+        texturePreview.style.backgroundSize = isPlain ? "" : "cover";
+      }
       saveCases();
       renderBoard();
       renderZoneLegend();

@@ -136,7 +136,7 @@ h2 {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(310px, 360px);
+  grid-template-columns: minmax(310px, 360px) minmax(0, 1fr);
   gap: 16px;
   min-height: 0;
   max-width: 1440px;
@@ -243,6 +243,27 @@ h2 {
 
 .field textarea {
   resize: vertical;
+}
+
+.texture-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.texture-preview {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.texture-select-row select {
+  flex: 1;
 }
 
 .suspect-cards {

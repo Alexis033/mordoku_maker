@@ -21,20 +21,6 @@
       </header>
 
       <main class="workspace">
-        <section class="board-stage" aria-label="Tablero">
-          <div class="board-toolbar">
-            <div id="selectedLabel" class="selected-label">Selecciona un sospechoso</div>
-            <button id="clearCellBtn" class="ghost" type="button">Vaciar tablero</button>
-          </div>
-          <label class="board-zoom">
-            <span>Zoom</span>
-            <input id="zoomRange" type="range" min="44" max="88" value="68">
-          </label>
-          <div class="board-scroll">
-            <div id="board" class="board" aria-label="Tablero de murdoku"></div>
-          </div>
-        </section>
-
         <aside class="sidebar">
           <div class="tabs" role="tablist" aria-label="Modo">
             <button id="playTab" class="tab active" type="button">Jugar</button>
@@ -129,6 +115,20 @@
             <div id="editorStatus" class="status-box"></div>
           </section>
         </aside>
+
+        <section class="board-stage" aria-label="Tablero">
+          <div class="board-toolbar">
+            <div id="selectedLabel" class="selected-label">Selecciona un sospechoso</div>
+            <button id="clearCellBtn" class="ghost" type="button">Vaciar tablero</button>
+          </div>
+          <label class="board-zoom">
+            <span>Zoom</span>
+            <input id="zoomRange" type="range" min="44" max="88" value="68">
+          </label>
+          <div class="board-scroll">
+            <div id="board" class="board" aria-label="Tablero de murdoku"></div>
+          </div>
+        </section>
       </main>
 
       <footer class="app-footer">
