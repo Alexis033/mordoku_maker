@@ -476,7 +476,6 @@ h2 {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   gap: 10px;
-  overflow: hidden;
 }
 
 .board-toolbar {
@@ -510,7 +509,6 @@ h2 {
   min-height: 0;
   max-height: none;
   padding: 4px;
-  overscroll-behavior: contain;
 }
 
 .board {
