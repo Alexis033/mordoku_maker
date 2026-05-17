@@ -10,6 +10,7 @@ import { AVATARS, COLORS, TEXTURES, MAX_SIZE, MIN_SIZE, DEFAULT_OBJECT_RULES } f
 import { normalizeCase } from "./src/normalize.js";
 import { readJson } from "./src/utils.js";
 import { STORAGE_KEY } from "./src/state.js";
+import defaultCase from "./mock/defaultCase.js";
 
 function bindElements() {
   [
@@ -120,24 +121,22 @@ function bindEvents() {
   });
 }
 
-async function loadCases() {
+function loadCases() {
   const saved = readJson(STORAGE_KEY);
   if (Array.isArray(saved) && saved.length) {
     state.cases = saved.map(normalizeCase);
   } else {
-    const resp = await fetch("mock/car-repair.json");
-    const data = await resp.json();
-    state.cases = [normalizeCase(data)];
+    state.cases = [normalizeCase(defaultCase)];
   }
   if (!state.cases.some((item) => item.id === state.caseId)) {
     state.caseId = state.cases[0].id;
   }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   bindElements();
   bindEvents();
-  await loadCases();
+  loadCases();
   loadCurrentCase(state.caseId);
   renderAll();
 });
