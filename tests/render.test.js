@@ -73,3 +73,25 @@ describe("cellHtml — game mode", () => {
     expect(html).toContain("Bruno");
   });
 });
+
+describe("cellHtml — object rendering", () => {
+  it("renders occupiable-object class for default object", () => {
+    state.cases[0].objects["3,3"] = { id: "table", color: null, rotation: 0 };
+    const html = cellHtml(state.cases[0], 3, 3);
+    expect(html).toContain("occupiable-object");
+    expect(html).not.toContain("blocked-object");
+  });
+
+  it("renders blocked-object class when object is non-occupiable", () => {
+    state.cases[0].objects["3,3"] = { id: "table", color: null, rotation: 0 };
+    state.cases[0].objectRules["table"] = { name: "table", occupiable: false };
+    const html = cellHtml(state.cases[0], 3, 3);
+    expect(html).toContain("blocked-object");
+    expect(html).not.toContain("occupiable-object");
+  });
+
+  it("renders no object span when cell has no object", () => {
+    const html = cellHtml(state.cases[0], 3, 3);
+    expect(html).not.toContain("cell-object");
+  });
+});

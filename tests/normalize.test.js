@@ -36,6 +36,17 @@ describe("normalizeSuspects", () => {
     const result = normalizeSuspects(many, 20);
     expect(result.length).toBeLessThanOrEqual(16);
   });
+
+  it("preserves passed gender", () => {
+    const result = normalizeSuspects([{ name: "Alex", gender: "female" }], 6);
+    expect(result[0].gender).toBe("female");
+  });
+
+  it("guesses gender from name when not provided", () => {
+    const result = normalizeSuspects([{ name: "Ana" }, { name: "Bruno" }], 6);
+    expect(result[0].gender).toBe("female");
+    expect(result[1].gender).toBe("male");
+  });
 });
 
 describe("normalizeRegions", () => {
@@ -110,6 +121,26 @@ describe("normalizeObjectRules", () => {
     const result = normalizeObjectRules(null, { "0,0": "my_custom_obj" }, false);
     expect(result["my_custom_obj"]).toBeDefined();
     expect(result["my_custom_obj"].name).toBe("my_custom_obj");
+  });
+
+  it("preserves underscore IDs from objects map", () => {
+    const result = normalizeObjectRules(null, { "0,0": "beach_ball" }, false);
+    expect(result["beach_ball"]).toBeDefined();
+    expect(result["beach_ball"].name).toBe("beach_ball");
+  });
+
+  it("preserves underscore IDs from saved rules", () => {
+    const rules = { beach_ball: { name: "beach_ball", occupiable: false } };
+    const result = normalizeObjectRules(rules, null, false);
+    expect(result["beach_ball"]).toBeDefined();
+    expect(result["beach_ball"].occupiable).toBe(false);
+  });
+
+  it("merges saved rules on top of defaults with correct keys", () => {
+    const rules = { oil_stain: { name: "oil_stain", occupiable: false } };
+    const result = normalizeObjectRules(rules, null, true);
+    expect(result.oil_stain).toBeDefined();
+    expect(result.oil_stain.occupiable).toBe(false);
   });
 });
 
@@ -186,5 +217,15 @@ describe("normalizeCase", () => {
     });
     expect(result.suspects[0].clue).toBe("Viste a Ana");
     expect(result.suspects[1].clue).toBe("");
+  });
+
+  it("adds gender to victim from guessGender", () => {
+    const result = normalizeCase({ victim: { name: "Maria" } });
+    expect(result.victim.gender).toBe("female");
+  });
+
+  it("preserves explicit victim gender", () => {
+    const result = normalizeCase({ victim: { name: "Maria", gender: "male" } });
+    expect(result.victim.gender).toBe("male");
   });
 });

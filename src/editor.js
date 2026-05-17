@@ -1,7 +1,7 @@
 import { state, els, currentCase } from "./state.js";
-import { renderBoard, renderEditorTools, renderAll, renderHeader, renderCaseSelect, renderPlayPanel, renderZoneLegend, renderSelectedLabel, cellCanBeOccupied, parseRegionNames, setStatus } from "./render.js";
+import { renderBoard, renderEditorTools, renderAll, renderHeader, renderCaseSelect, renderPlayPanel, renderZoneLegend, renderSelectedLabel, renderSuspectCards, cellCanBeOccupied, parseRegionNames, setStatus } from "./render.js";
 import { saveCases } from "./persist.js";
-import { normalizeCase, normalizeSuspects, normalizeRegions, normalizeRegionNames, normalizeRegionTextures, remapInvalidRegions } from "./normalize.js";
+import { normalizeCase, normalizeSuspects, normalizeRegions, normalizeRegionNames, normalizeRegionTextures, remapInvalidRegions, guessGender } from "./normalize.js";
 import { cellKey, clamp, escapeAttr, escapeHtml, makeId, getObjectSize, rotatedSize } from "./utils.js";
 import { AVATARS, COLORS, MAX_SIZE, MIN_SIZE, DEFAULT_OBJECT_RULES } from "./catalogs.js";
 import { stopTimer } from "./game.js";
@@ -126,9 +126,11 @@ export function updateCaseSuspects() {
     id: item.suspects[index]?.id || makeId(name),
     name,
     color: item.suspects[index]?.color || AVATARS[index % AVATARS.length],
-    clue: item.suspects[index]?.clue || ""
+    clue: item.suspects[index]?.clue || "",
+    gender: item.suspects[index]?.gender
   })), Math.min(MAX_SIZE, Math.max(item.rows, item.cols)));
   els.editClues.value = item.suspects.map((s) => s.clue || "").join("\n");
+  els.editGenders.value = item.suspects.map((s) => s.gender || "").join("\n");
   item.solution = Object.fromEntries(Object.entries(item.solution).filter(([id]) => (
     item.suspects.some((suspect) => suspect.id === id)
   )));
@@ -153,6 +155,22 @@ export function updateCaseClues() {
   });
   saveCases();
   setStatus(els.editorStatus, "Pistas actualizadas.", "success");
+}
+
+export function updateCaseGenders() {
+  if (state.mode !== "editor") return;
+  const item = currentCase();
+  const genderLines = els.editGenders.value.split(/\r?\n/).map((line) => line.trim().toLowerCase());
+  item.suspects.forEach((suspect, i) => {
+    const raw = genderLines[i];
+    if (raw === "m" || raw === "male") suspect.gender = "male";
+    else if (raw === "f" || raw === "female") suspect.gender = "female";
+    else suspect.gender = guessGender(suspect.name);
+  });
+  saveCases();
+  renderBoard();
+  renderSuspectCards();
+  setStatus(els.editorStatus, "Generos actualizados.", "success");
 }
 
 export function updateCaseRegions() {
@@ -225,7 +243,8 @@ export function saveEditorCase() {
     id: item.suspects[index]?.id || makeId(name),
     name,
     color: item.suspects[index]?.color || AVATARS[index % AVATARS.length],
-    clue: clueLines[index] || ""
+    clue: clueLines[index] || "",
+    gender: item.suspects[index]?.gender
   })), Math.min(MAX_SIZE, Math.max(nextRows, nextCols)));
   item.regionNames = parseRegionNames(els.editRegions.value);
   item.solution = Object.fromEntries(Object.entries(item.solution).filter(([id, pos]) => (

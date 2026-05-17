@@ -2,13 +2,13 @@ import { state, els, currentCase } from "./src/state.js";
 import { renderAll, renderBoard, renderPlayPanel, renderBoardSize, setStatus } from "./src/render.js";
 import { renderEditorTools, renderEditorModeButtons } from "./src/render.js";
 import { handleCellClick, verifyBoard, resetProgress, clearBoardPieces, elapsedSeconds } from "./src/game.js";
-import { updateCaseTextFields, updateCaseSuspects, updateCaseClues, updateCaseRegions, updateCaseDimensions } from "./src/editor.js";
+import { updateCaseTextFields, updateCaseSuspects, updateCaseClues, updateCaseGenders, updateCaseRegions, updateCaseDimensions } from "./src/editor.js";
 import { saveEditorCase, createNewCase, generateNewCase, duplicateCase, deleteCase, exportCurrentCase, importCase } from "./src/editor.js";
 import { editCell, loadCurrentCase, switchMode } from "./src/editor.js";
 import { persistProgress } from "./src/persist.js";
+import { AVATARS, COLORS, TEXTURES, MAX_SIZE, MIN_SIZE, DEFAULT_OBJECT_RULES } from "./src/catalogs.js";
 import { normalizeCase } from "./src/normalize.js";
 import { readJson } from "./src/utils.js";
-import { sampleCase } from "./src/catalogs.js";
 import { STORAGE_KEY } from "./src/state.js";
 
 function bindElements() {
@@ -19,7 +19,7 @@ function bindElements() {
     "resetBtn", "zoomRange", "zoneLegend", "objectLegend", "suspectCards", "statusBox",
     "editTitle", "editDifficulty", "editRows", "editCols",
     "generateCaseBtn", "newCaseBtn", "saveCaseBtn", "exportCaseBtn", "importCaseInput",
-    "editSuspects", "editClues", "editRegions", "editorTools", "editorRegionBar", "editorStatus",
+    "editSuspects", "editClues", "editGenders", "editRegions", "editorTools", "editorRegionBar", "editorStatus",
     "suspectClueFields", "editRegionsField",
     "board", "selectedLabel", "clearCellBtn"
   ].forEach((id) => els[id] = document.getElementById(id));
@@ -106,6 +106,7 @@ function bindEvents() {
   els.editDifficulty.addEventListener("input", updateCaseTextFields);
   els.editSuspects.addEventListener("input", updateCaseSuspects);
   els.editClues.addEventListener("input", updateCaseClues);
+  els.editGenders.addEventListener("input", updateCaseGenders);
   els.editRegions.addEventListener("input", updateCaseRegions);
   els.editRows.addEventListener("change", updateCaseDimensions);
   els.editCols.addEventListener("change", updateCaseDimensions);
@@ -119,18 +120,24 @@ function bindEvents() {
   });
 }
 
-function loadCases() {
+async function loadCases() {
   const saved = readJson(STORAGE_KEY);
-  state.cases = Array.isArray(saved) && saved.length ? saved.map(normalizeCase) : [normalizeCase(sampleCase)];
+  if (Array.isArray(saved) && saved.length) {
+    state.cases = saved.map(normalizeCase);
+  } else {
+    const resp = await fetch("mock/car-repair.json");
+    const data = await resp.json();
+    state.cases = [normalizeCase(data)];
+  }
   if (!state.cases.some((item) => item.id === state.caseId)) {
     state.caseId = state.cases[0].id;
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   bindElements();
   bindEvents();
-  loadCases();
+  await loadCases();
   loadCurrentCase(state.caseId);
   renderAll();
 });

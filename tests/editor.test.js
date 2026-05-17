@@ -63,41 +63,41 @@ beforeEach(() => {
 describe("editCell — object mode", () => {
   describe("placement", () => {
     it("places a 1x1 object anchor at target cell", () => {
-      state.selectedObject = "box";
+      state.selectedObject = "chair";
       editCell(2, 3);
       const obj = currentCase().objects["2,3"];
       expect(obj).toBeDefined();
-      expect(obj.id).toBe("box");
+      expect(obj.id).toBe("chair");
       expect(obj.w).toBe(1);
       expect(obj.h).toBe(1);
     });
 
     it("places a 2x1 object with ref cell to the right", () => {
-      state.selectedObject = "box";
+      state.selectedObject = "chair";
       state.selectedObjectW = 2;
       state.selectedObjectH = 1;
       editCell(2, 3);
       const obj = currentCase().objects;
       expect(obj["2,3"]).toBeDefined();
-      expect(obj["2,3"].id).toBe("box");
+      expect(obj["2,3"].id).toBe("chair");
       expect(obj["2,3"].w).toBe(2);
       expect(obj["2,3"].h).toBe(1);
       expect(obj["2,4"]).toEqual({ ref: "2,3" });
     });
 
     it("places a 1x2 object with ref cell below", () => {
-      state.selectedObject = "box";
+      state.selectedObject = "chair";
       state.selectedObjectW = 1;
       state.selectedObjectH = 2;
       editCell(2, 3);
       const obj = currentCase().objects;
-      expect(obj["2,3"].id).toBe("box");
+      expect(obj["2,3"].id).toBe("chair");
       expect(obj["2,3"].h).toBe(2);
       expect(obj["3,3"]).toEqual({ ref: "2,3" });
     });
 
     it("rotates correctly (w=2,h=1,rot=90 → 1 column)", () => {
-      state.selectedObject = "box";
+      state.selectedObject = "chair";
       state.selectedObjectW = 2;
       state.selectedObjectH = 1;
       state.selectedObjectRotation = 90;
@@ -106,12 +106,12 @@ describe("editCell — object mode", () => {
       expect(obj["2,3"].rotation).toBe(90);
       expect(obj["2,3"].w).toBe(2);
       expect(obj["2,3"].h).toBe(1);
-      expect(obj["2,3"].id).toBe("box");
+      expect(obj["2,3"].id).toBe("chair");
       expect(obj["3,3"]).toEqual({ ref: "2,3" });
     });
 
     it("rejects object that overflows the board", () => {
-      state.selectedObject = "box";
+      state.selectedObject = "chair";
       state.selectedObjectW = 2;
       editCell(5, 5);
       expect(currentCase().objects).toEqual({});
@@ -121,14 +121,14 @@ describe("editCell — object mode", () => {
   describe("removal", () => {
     it("removes single-cell object when clicking anchor with no selection", () => {
       const item = currentCase();
-      item.objects["2,3"] = { id: "box", color: null, rotation: 0, w: 1, h: 1 };
+      item.objects["2,3"] = { id: "chair", color: null, rotation: 0, w: 1, h: 1 };
       editCell(2, 3);
       expect(item.objects["2,3"]).toBeUndefined();
     });
 
     it("removes multi-cell object + its refs when clicking anchor", () => {
       const item = currentCase();
-      item.objects["2,3"] = { id: "box", color: null, rotation: 0, w: 2, h: 1 };
+      item.objects["2,3"] = { id: "chair", color: null, rotation: 0, w: 2, h: 1 };
       item.objects["2,4"] = { ref: "2,3" };
       editCell(2, 3);
       expect(item.objects["2,3"]).toBeUndefined();
@@ -137,7 +137,7 @@ describe("editCell — object mode", () => {
 
     it("removes multi-cell object + its refs when clicking ref", () => {
       const item = currentCase();
-      item.objects["2,3"] = { id: "box", color: null, rotation: 0, w: 2, h: 1 };
+      item.objects["2,3"] = { id: "chair", color: null, rotation: 0, w: 2, h: 1 };
       item.objects["2,4"] = { ref: "2,3" };
       editCell(2, 4);
       expect(item.objects["2,3"]).toBeUndefined();
@@ -157,7 +157,7 @@ describe("editCell — victim mode", () => {
 
 describe("editCell — side effects", () => {
   it("persists and re-renders after every edit", () => {
-    state.selectedObject = "box";
+    state.selectedObject = "chair";
     editCell(2, 3);
     expect(saveCases).toHaveBeenCalledOnce();
     expect(renderBoard).toHaveBeenCalledOnce();

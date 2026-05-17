@@ -260,7 +260,7 @@ export function renderSuspectCards() {
   const item = currentCase();
   const victimCard = `
     <button class="suspect-card${state.selectedSuspect === "__victim__" ? " active" : ""}" data-victim-piece="true" type="button">
-      <div class="card-photo card-photo-victim">${FEMALE_SVG}</div>
+      <div class="card-photo card-photo-victim">${item.victim.gender === "male" ? MALE_SVG : FEMALE_SVG}</div>
       <div class="card-name">${escapeHtml(item.victim.name || "Victima")}</div>
       ${item.victim.clue ? `<div class="card-clue">${escapeHtml(item.victim.clue)}</div>` : ""}
     </button>
@@ -365,6 +365,7 @@ export function renderEditorPanel() {
   els.editCols.value = item.cols;
   els.editSuspects.value = item.suspects.map((suspect) => suspect.name).join("\n");
   els.editClues.value = item.suspects.map((suspect) => suspect.clue || "").join("\n");
+  els.editGenders.value = item.suspects.map((suspect) => suspect.gender || "").join("\n");
   els.editRegions.value = item.regionNames.join("\n");
   renderEditorModeButtons();
   renderEditorTools();
@@ -512,7 +513,7 @@ export function renderEditorTools() {
     els.editorRegionBar.innerHTML = "";
     els.editorTools.innerHTML = `
       <div class="object-controls">
-        <label class="field">
+        <div class="field">
           <span>Rotacion</span>
           <div class="rotation-controls">
             <button id="rotateLeftBtn" type="button" title="-90°">-90</button>
@@ -520,7 +521,7 @@ export function renderEditorTools() {
             <button id="rotateRightBtn" type="button" title="+90°">+90</button>
             <button id="flipBtn" type="button" title="180°">180</button>
           </div>
-        </label>
+        </div>
         <label class="field">
           <span>Tamaño (ancho x alto)</span>
           <div class="size-controls">
@@ -601,6 +602,13 @@ export function renderEditorTools() {
         <span>Pista de la victima</span>
         <input id="victimClueInput" type="text" value="${escapeAttr(item.victim.clue || "")}">
       </label>
+      <div class="gender-toggle">
+        <span>Genero</span>
+        <div class="gender-buttons">
+          <button id="victimGenderFemale" class="gender-btn${item.victim.gender !== "male" ? " active" : ""}" type="button">${FEMALE_SVG}</button>
+          <button id="victimGenderMale" class="gender-btn${item.victim.gender === "male" ? " active" : ""}" type="button">${MALE_SVG}</button>
+        </div>
+      </div>
       <div class="solution-row">
         <span class="cell-victim mini-victim">${escapeHtml((item.victim.name || "V").slice(0, 1))}</span>
         <span>${escapeHtml(item.victim.name || "Victima")}</span>
@@ -620,6 +628,18 @@ export function renderEditorTools() {
       saveCases();
       setStatus(els.editorStatus, "Pista de victima actualizada.", "success");
     });
+    const victimGenderFemale = document.getElementById("victimGenderFemale");
+    const victimGenderMale = document.getElementById("victimGenderMale");
+    function setVictimGender(gender) {
+      item.victim.gender = gender;
+      saveCases();
+      renderBoard();
+      renderSuspectCards();
+      renderEditorTools();
+      setStatus(els.editorStatus, `Genero de victima actualizado.`, "success");
+    }
+    victimGenderFemale?.addEventListener("click", () => setVictimGender("female"));
+    victimGenderMale?.addEventListener("click", () => setVictimGender("male"));
   } else {
     els.editorRegionBar.innerHTML = "";
     els.editorTools.innerHTML = `
