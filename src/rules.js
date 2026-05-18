@@ -9,13 +9,15 @@ export function uniqueBoardPlacements(board) {
   return next;
 }
 
+import { parseCellKey } from "./utils.js";
+
 export function occupiedLineUnavailableCells({ board, victimGuess, rows, cols, cellKey }) {
   const placements = Object.keys(board).map((key) => {
-    const [row, col] = key.split(",").map(Number);
+    const { row, col } = parseCellKey(key);
     return { key, row, col };
   });
   if (victimGuess) {
-    const [row, col] = victimGuess.split(",").map(Number);
+    const { row, col } = parseCellKey(victimGuess);
     placements.push({ key: victimGuess, row, col });
   }
   if (!placements.length) return new Set();
@@ -39,7 +41,7 @@ export function findLineConflicts(board) {
   const cols = new Map();
   const conflicts = new Set();
   for (const [key, suspectId] of Object.entries(board)) {
-    const [row, col] = key.split(",").map(Number);
+    const { row, col } = parseCellKey(key);
     const rowKey = `${suspectId}:r:${row}`;
     const colKey = `${suspectId}:c:${col}`;
     if (rows.has(rowKey)) {
@@ -59,13 +61,13 @@ export function cellBlockedByPlacedLine({ board, victimGuess, row, col, movingPi
   const placements = Object.entries(board)
     .filter(([, suspectId]) => suspectId !== movingPiece)
     .map(([placementKey]) => {
-      const [placementRow, placementCol] = placementKey.split(",").map(Number);
-      return { key: placementKey, row: placementRow, col: placementCol };
+      const { row, col } = parseCellKey(placementKey);
+      return { key: placementKey, row, col };
     });
 
   if (victimGuess && movingPiece !== "__victim__") {
-    const [victimRow, victimCol] = victimGuess.split(",").map(Number);
-    placements.push({ key: victimGuess, row: victimRow, col: victimCol });
+    const { row, col } = parseCellKey(victimGuess);
+    placements.push({ key: victimGuess, row, col });
   }
 
   return placements.some((placement) => (

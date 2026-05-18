@@ -1,14 +1,25 @@
 import { state, els, currentCase } from "./state.js";
-import { renderBoard, renderEditorTools, renderAll, renderHeader, renderCaseSelect, renderPlayPanel, renderZoneLegend, renderSelectedLabel, renderSuspectCards, cellCanBeOccupied, parseRegionNames, setStatus } from "./render.js";
+import { renderBoard, renderEditorTools, renderAll, renderHeader, renderCaseSelect, renderPlayPanel, renderZoneLegend, renderSelectedLabel, renderSuspectCards, cellCanBeOccupied, parseRegionNames, setStatus, editorSuccess } from "./render.js";
 import { saveCases } from "./persist.js";
 import { normalizeCase, normalizeSuspects, normalizeRegions, normalizeRegionNames, normalizeRegionTextures, remapInvalidRegions, guessGender } from "./normalize.js";
-import { cellKey, clamp, escapeAttr, escapeHtml, makeId, getObjectSize, rotatedSize } from "./utils.js";
+import { cellKey, clamp, escapeAttr, escapeHtml, makeId, getObjectSize, rotatedSize, parseCellKey, splitLines, splitLinesRaw, filterObjectEntries } from "./utils.js";
 import { AVATARS, COLORS, MAX_SIZE, MIN_SIZE, DEFAULT_OBJECT_RULES } from "./catalogs.js";
 import { stopTimer } from "./game.js";
 import { uniqueBoardPlacements } from "./rules.js";
 import { readJson } from "./utils.js";
 import { PROGRESS_KEY } from "./state.js";
 import { generateCase } from "./generator.js";
+
+function guardEditorMode() {
+  if (state.mode !== "editor") return false;
+  return true;
+}
+
+function finalizeCaseChange() {
+  saveCases();
+  loadCurrentCase(state.caseId);
+  renderAll();
+}
 
 export function editCell(row, col) {
   const item = currentCase();
@@ -31,7 +42,7 @@ export function editCell(row, col) {
             } else {
               const { w: ew, h: eh } = getObjectSize(existing);
               const { w: esw, h: esh } = rotatedSize(ew, eh, existing.rotation);
-              const [er, ec] = k.split(",").map(Number);
+              const { row: er, col: ec } = parseCellKey(k);
               for (let dr2 = 0; dr2 < esh; dr2++) {
                 for (let dc2 = 0; dc2 < esw; dc2++) {
                   delete item.objects[cellKey(er + dr2, ec + dc2)];
@@ -70,7 +81,7 @@ export function editCell(row, col) {
         const { w, h } = getObjectSize(raw);
         const rot = typeof raw === "object" ? (raw.rotation || 0) : 0;
         const { w: sw, h: sh } = rotatedSize(w, h, rot);
-        const [ar, ac] = key.split(",").map(Number);
+        const { row: ar, col: ac } = parseCellKey(key);
         for (let dr = 0; dr < sh; dr++) {
           for (let dc = 0; dc < sw; dc++) {
             delete item.objects[cellKey(ar + dr, ac + dc)];
@@ -100,24 +111,24 @@ export function editCell(row, col) {
   saveCases();
   renderBoard();
   if (state.editorMode === "victim" || state.editorMode === "solution") renderEditorTools();
-  setStatus(els.editorStatus, "Cambio aplicado.", "success");
+  editorSuccess("Cambio aplicado.");
 }
 
 export function updateCaseTextFields() {
-  if (state.mode !== "editor") return;
+  if (!guardEditorMode()) return;
   const item = currentCase();
   item.title = els.editTitle.value.trim() || "Caso sin titulo";
   item.difficulty = els.editDifficulty.value.trim() || "Personalizado";
   saveCases();
   renderHeader();
   renderCaseSelect();
-  setStatus(els.editorStatus, "Texto actualizado.", "success");
+  editorSuccess("Texto actualizado.");
 }
 
 export function updateCaseSuspects() {
-  if (state.mode !== "editor") return;
+  if (!guardEditorMode()) return;
   const item = currentCase();
-  const names = els.editSuspects.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const names = splitLines(els.editSuspects.value);
   if (!names.length) {
     setStatus(els.editorStatus, "Debe existir al menos un sospechoso.", "warning");
     return;
@@ -131,9 +142,9 @@ export function updateCaseSuspects() {
   })), Math.min(MAX_SIZE, Math.max(item.rows, item.cols)));
   els.editClues.value = item.suspects.map((s) => s.clue || "").join("\n");
   els.editGenders.value = item.suspects.map((s) => s.gender || "").join("\n");
-  item.solution = Object.fromEntries(Object.entries(item.solution).filter(([id]) => (
+  item.solution = filterObjectEntries(item.solution, (id) => (
     item.suspects.some((suspect) => suspect.id === id)
-  )));
+  ));
   if (!item.suspects.some((suspect) => suspect.id === state.selectedSuspect)) {
     state.selectedSuspect = null;
   }
@@ -143,24 +154,24 @@ export function updateCaseSuspects() {
   saveCases();
   renderBoard();
   renderEditorTools();
-  setStatus(els.editorStatus, "Sospechosos actualizados.", "success");
+  editorSuccess("Sospechosos actualizados.");
 }
 
 export function updateCaseClues() {
-  if (state.mode !== "editor") return;
+  if (!guardEditorMode()) return;
   const item = currentCase();
-  const clueLines = els.editClues.value.split(/\r?\n/).map((line) => line.trim());
+  const clueLines = splitLinesRaw(els.editClues.value);
   item.suspects.forEach((suspect, i) => {
     suspect.clue = clueLines[i] || "";
   });
   saveCases();
-  setStatus(els.editorStatus, "Pistas actualizadas.", "success");
+  editorSuccess("Pistas actualizadas.");
 }
 
 export function updateCaseGenders() {
-  if (state.mode !== "editor") return;
+  if (!guardEditorMode()) return;
   const item = currentCase();
-  const genderLines = els.editGenders.value.split(/\r?\n/).map((line) => line.trim().toLowerCase());
+  const genderLines = splitLinesRaw(els.editGenders.value).map((l) => l.toLowerCase());
   item.suspects.forEach((suspect, i) => {
     const raw = genderLines[i];
     if (raw === "m" || raw === "male") suspect.gender = "male";
@@ -170,11 +181,11 @@ export function updateCaseGenders() {
   saveCases();
   renderBoard();
   renderSuspectCards();
-  setStatus(els.editorStatus, "Generos actualizados.", "success");
+  editorSuccess("Generos actualizados.");
 }
 
 export function updateCaseRegions() {
-  if (state.mode !== "editor") return;
+  if (!guardEditorMode()) return;
   const item = currentCase();
   item.regionNames = parseRegionNames(els.editRegions.value);
   item.regionTextures = normalizeRegionTextures(item.regionTextures, item.regionNames.length);
@@ -183,11 +194,11 @@ export function updateCaseRegions() {
   saveCases();
   renderBoard();
   renderEditorTools();
-  setStatus(els.editorStatus, "Zonas actualizadas.", "success");
+  editorSuccess("Zonas actualizadas.");
 }
 
 export function updateCaseDimensions() {
-  if (state.mode !== "editor") return;
+  if (!guardEditorMode()) return;
   const item = currentCase();
   const nextRows = clamp(Number(els.editRows.value) || item.rows, MIN_SIZE, MAX_SIZE);
   const nextCols = clamp(Number(els.editCols.value) || item.cols, MIN_SIZE, MAX_SIZE);
@@ -198,7 +209,7 @@ export function updateCaseDimensions() {
     saveCases();
     renderBoard();
     renderPlayPanel();
-    setStatus(els.editorStatus, `Tablero cambiado a ${nextRows}x${nextCols}.`, "success");
+    editorSuccess(`Tablero cambiado a ${nextRows}x${nextCols}.`);
   }
 }
 
@@ -209,23 +220,23 @@ export function resizeCase(item, rows, cols = rows) {
   item.regions = normalizeRegions(item.regions, rows, cols);
   item.victim.row = clamp(item.victim.row, 0, rows - 1);
   item.victim.col = clamp(item.victim.col, 0, cols - 1);
-  item.objects = Object.fromEntries(Object.entries(item.objects).filter(([key]) => {
-    const [row, col] = key.split(",").map(Number);
+  item.objects = filterObjectEntries(item.objects, (key) => {
+    const { row, col } = parseCellKey(key);
     return row < rows && col < cols;
-  }));
+  });
   const validAnchors = new Set(Object.keys(item.objects));
   for (const [key, raw] of Object.entries(item.objects)) {
     if (raw && raw.ref && !validAnchors.has(raw.ref)) delete item.objects[key];
   }
-  item.solution = Object.fromEntries(Object.entries(item.solution || {}).filter(([, pos]) => (
+  item.solution = filterObjectEntries(item.solution, (_, pos) => (
     pos.row < rows && pos.col < cols
-  )));
-  state.board = Object.fromEntries(Object.entries(state.board || {}).filter(([key]) => {
-    const [row, col] = key.split(",").map(Number);
+  ));
+  state.board = filterObjectEntries(state.board, (key) => {
+    const { row, col } = parseCellKey(key);
     return row < rows && col < cols;
-  }));
+  });
   if (state.victimGuess) {
-    const [row, col] = state.victimGuess.split(",").map(Number);
+    const { row, col } = parseCellKey(state.victimGuess);
     if (row >= rows || col >= cols) state.victimGuess = "";
   }
 }
@@ -237,8 +248,8 @@ export function saveEditorCase() {
   item.title = els.editTitle.value.trim() || "Caso sin titulo";
   item.difficulty = els.editDifficulty.value.trim() || "Personalizado";
   if (nextRows !== item.rows || nextCols !== item.cols) resizeCase(item, nextRows, nextCols);
-  const names = els.editSuspects.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const clueLines = els.editClues.value.split(/\r?\n/).map((line) => line.trim());
+  const names = splitLines(els.editSuspects.value);
+  const clueLines = splitLinesRaw(els.editClues.value);
   item.suspects = normalizeSuspects(names.map((name, index) => ({
     id: item.suspects[index]?.id || makeId(name),
     name,
@@ -247,13 +258,13 @@ export function saveEditorCase() {
     gender: item.suspects[index]?.gender
   })), Math.min(MAX_SIZE, Math.max(nextRows, nextCols)));
   item.regionNames = parseRegionNames(els.editRegions.value);
-  item.solution = Object.fromEntries(Object.entries(item.solution).filter(([id, pos]) => (
+  item.solution = filterObjectEntries(item.solution, (id, pos) => (
     item.suspects.some((suspect) => suspect.id === id) && pos.row < item.rows && pos.col < item.cols
-  )));
+  ));
   if (!item.suspects.some((suspect) => suspect.id === item.murderer)) item.murderer = item.suspects[0]?.id || "";
   saveCases();
   renderAll();
-  setStatus(els.editorStatus, "Caso guardado.", "success");
+  editorSuccess("Caso guardado.");
 }
 
 export function generateNewCase() {
@@ -262,9 +273,7 @@ export function generateNewCase() {
   const newCase = generateCase(rows, cols);
   state.cases.push(newCase);
   state.caseId = newCase.id;
-  saveCases();
-  loadCurrentCase(newCase.id);
-  renderAll();
+  finalizeCaseChange();
 }
 
 export function createNewCase() {
@@ -292,9 +301,7 @@ export function createNewCase() {
   });
   state.cases.push(newCase);
   state.caseId = newCase.id;
-  saveCases();
-  loadCurrentCase(newCase.id);
-  renderAll();
+  finalizeCaseChange();
 }
 
 export function duplicateCase() {
@@ -303,9 +310,7 @@ export function duplicateCase() {
   copy.title = `${copy.title} copia`;
   state.cases.push(normalizeCase(copy));
   state.caseId = copy.id;
-  saveCases();
-  loadCurrentCase(copy.id);
-  renderAll();
+  finalizeCaseChange();
 }
 
 export function deleteCase() {
@@ -316,9 +321,7 @@ export function deleteCase() {
   const index = state.cases.findIndex((item) => item.id === state.caseId);
   state.cases.splice(index, 1);
   state.caseId = state.cases[0].id;
-  saveCases();
-  loadCurrentCase(state.caseId);
-  renderAll();
+  finalizeCaseChange();
 }
 
 export function exportCurrentCase() {
@@ -341,9 +344,7 @@ export function importCase(event) {
       imported.id = makeId(`${imported.title}-${Date.now()}`);
       state.cases.push(imported);
       state.caseId = imported.id;
-      saveCases();
-      loadCurrentCase(imported.id);
-      renderAll();
+      finalizeCaseChange();
       switchMode("editor");
     } catch {
       setStatus(els.editorStatus, "No se pudo importar el JSON.", "error");

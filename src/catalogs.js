@@ -121,6 +121,10 @@ export const TEXTURES = [
   { id: "water_plant",           name: "planta de agua",    png: true }
 ];
 
+export function findObject(id) {
+  return OBJECTS.find((o) => o.id === id);
+}
+
 export function objectAssetForKey(key) {
   const exact = {
     arbol: "tree", arbusto: "bush", banco: "bench", agua: "water", fuente: "fountain",

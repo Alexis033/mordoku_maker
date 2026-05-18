@@ -54,3 +54,20 @@ export function rotatedSize(w, h, rotation) {
   const rot = rotation || 0;
   return (rot % 180 !== 0) ? { w: h, h: w } : { w, h };
 }
+
+export function parseCellKey(key) {
+  const [row, col] = key.split(",").map(Number);
+  return { row, col };
+}
+
+export function splitLines(value) {
+  return value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+}
+
+export function splitLinesRaw(value) {
+  return value.split(/\r?\n/).map((line) => line.trim());
+}
+
+export function filterObjectEntries(obj, predicate) {
+  return Object.fromEntries(Object.entries(obj || {}).filter(([key, value]) => predicate(key, value)));
+}

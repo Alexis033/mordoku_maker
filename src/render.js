@@ -1,6 +1,6 @@
 import { state, els, currentCase, gameCase } from "./state.js";
-import { AVATARS, COLORS, OBJECTS, TEXTURES, objectAssetForKey } from "./catalogs.js";
-import { cellKey, escapeAttr, escapeHtml, getObjectSize, rotatedSize } from "./utils.js";
+import { AVATARS, COLORS, OBJECTS, TEXTURES, objectAssetForKey, findObject } from "./catalogs.js";
+import { cellKey, escapeAttr, escapeHtml, getObjectSize, rotatedSize, splitLines } from "./utils.js";
 import { occupiedLineUnavailableCells as computeUnavailableCells, findLineConflicts } from "./rules.js";
 import { saveCases } from "./persist.js";
 import { updateTimerLabel } from "./game.js";
@@ -43,7 +43,7 @@ export function regionTexture(item, index) {
 }
 
 export function parseRegionNames(value) {
-  const names = value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const names = splitLines(value);
   return names.length ? names.slice(0, COLORS.length) : ["Zona 1"];
 }
 
@@ -65,18 +65,18 @@ export function cellBorderClasses(item, row, col, region) {
 }
 
 export function objectLabel(item, objectId) {
-  const obj = OBJECTS.find((o) => o.id === objectId);
+  const obj = findObject(objectId);
   if (obj) return obj.name;
   return item.objectRules[objectId]?.name || objectId;
 }
 
 export function objectIcon(id, color) {
   function imgSrc(id) {
-    const entry = OBJECTS.find((o) => o.id === id);
+    const entry = findObject(id);
     if (entry) return `assets/objects/${escapeAttr(id)}.${entry.png ? "png" : "svg"}`;
     const assetKey = objectAssetForKey(id);
     if (!assetKey) return "";
-    const fallback = OBJECTS.find((o) => o.id === assetKey);
+    const fallback = findObject(assetKey);
     return `assets/objects/${escapeAttr(assetKey)}.${fallback?.png ? "png" : "svg"}`;
   }
   const src = imgSrc(id);
@@ -405,6 +405,117 @@ export function clearRegionHighlight() {
   }
 }
 
+export function editorSuccess(msg) {
+  setStatus(els.editorStatus, msg, "success");
+}
+
+export function createDropdown(config) {
+  const {
+    id, options, getId, getLabel, swatchHtml,
+    emptyLabel = "", emptySwatchHtml = "",
+    value = null, onChange, sortByName = false,
+  } = config;
+
+  const sorted = sortByName
+    ? [...options].sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
+    : options;
+
+  const currentItem = options.find((o) => getId(o) === value);
+  const currentLabel = currentItem ? getLabel(currentItem) : emptyLabel;
+  const currentSwatch = value ? swatchHtml(value) : emptySwatchHtml;
+
+  const optionHtml = sorted.map((item) => {
+    const itemId = getId(item);
+    return `
+      <button class="texture-option ${value === itemId ? "active" : ""}" data-dd-opt="${escapeAttr(itemId)}" type="button">
+        <span class="texture-option-swatch">${swatchHtml(itemId)}</span>
+        <span>${escapeHtml(getLabel(item))}</span>
+      </button>
+    `;
+  }).join("");
+
+  const emptyHtml = emptyLabel ? `
+    <button class="texture-option ${!value ? "active" : ""}" data-dd-opt="" type="button">
+      <span class="texture-option-swatch">${emptySwatchHtml}</span>
+      <span>${escapeHtml(emptyLabel)}</span>
+    </button>
+  ` : "";
+
+  const html = `
+    <div class="texture-select-row">
+      <span class="texture-preview" id="${id}Preview">${currentSwatch}</span>
+      <div class="texture-dropdown-wrap">
+        <button class="texture-dropdown-trigger" id="${id}Trigger" type="button">
+          <span class="texture-dropdown-trigger-swatch" id="${id}Swatch">${currentSwatch}</span>
+          <span id="${id}Label">${escapeHtml(currentLabel)}</span>
+          <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="texture-dropdown-panel" id="${id}Panel">
+          ${emptyHtml}
+          ${optionHtml}
+        </div>
+      </div>
+    </div>
+  `;
+
+  function mount() {
+    const preview = document.getElementById(`${id}Preview`);
+    const trigger = document.getElementById(`${id}Trigger`);
+    const panel = document.getElementById(`${id}Panel`);
+    const swatch = document.getElementById(`${id}Swatch`);
+    const label = document.getElementById(`${id}Label`);
+    let open = false;
+
+    function apply(id) {
+      swatch.innerHTML = id ? swatchHtml(id) : emptySwatchHtml;
+      preview.innerHTML = id ? swatchHtml(id) : emptySwatchHtml;
+      const item = options.find((o) => getId(o) === id);
+      label.textContent = item ? getLabel(item) : emptyLabel;
+      panel.querySelectorAll(".texture-option").forEach((opt) => {
+        opt.classList.toggle("active", opt.dataset.ddOpt === id);
+      });
+    }
+
+    function openPanel() {
+      open = true;
+      panel.classList.add("open");
+    }
+
+    function closePanel() {
+      open = false;
+      panel.classList.remove("open");
+    }
+
+    trigger?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (open) closePanel(); else openPanel();
+    });
+
+    panel?.querySelectorAll(".texture-option").forEach((opt) => {
+      opt.addEventListener("mouseenter", () => {
+        preview.innerHTML = opt.dataset.ddOpt ? swatchHtml(opt.dataset.ddOpt) : emptySwatchHtml;
+      });
+      opt.addEventListener("click", () => {
+        const newId = opt.dataset.ddOpt;
+        closePanel();
+        if (newId !== value) {
+          apply(newId);
+          onChange(newId);
+        }
+      });
+    });
+
+    return function onContainerClick(e) {
+      if (open && !e.target.closest(".texture-dropdown-wrap")) {
+        closePanel();
+        apply(value);
+      }
+    };
+  }
+
+  return { html, mount };
+}
+
 export function renderEditorTools() {
   clearRegionHighlight();
   const item = currentCase();
@@ -432,85 +543,63 @@ export function renderEditorTools() {
       });
       button.addEventListener("mouseleave", clearRegionHighlight);
     });
+    const textureSelector = createDropdown({
+      id: "texture",
+      options: TEXTURES,
+      getId: (t) => t.id,
+      getLabel: (t) => t.name,
+      swatchHtml: (id) => id === "plain"
+        ? `<span style="display:block;width:100%;height:100%;background:var(--panel);border-radius:3px;"></span>`
+        : `<span style="display:block;width:100%;height:100%;background-image:url(${textureUrlFor(id)});background-size:cover;border-radius:3px;"></span>`,
+      value: regionTexture(item, state.selectedRegion),
+      sortByName: true,
+      onChange: (id) => {
+        item.regionTextures[state.selectedRegion] = id;
+        saveCases();
+        renderBoard();
+        renderZoneLegend();
+        editorSuccess("Textura de zona actualizada.");
+      },
+    });
+
     els.editorTools.innerHTML = `
       <label class="field texture-select-field">
         <span>Textura para ${state.selectedRegion == null ? "—" : escapeHtml(regionName(item, state.selectedRegion))}</span>
-        <div class="texture-select-row">
-          <span class="texture-preview" id="texturePreview" style="${textureBg(regionTexture(item, state.selectedRegion))}"></span>
-          <div class="texture-dropdown-wrap">
-            <button class="texture-dropdown-trigger" id="textureDropdownTrigger" type="button">
-              <span class="texture-dropdown-trigger-swatch" style="${textureBg(regionTexture(item, state.selectedRegion))}"></span>
-              <span id="textureTriggerLabel">${escapeHtml(textureName(regionTexture(item, state.selectedRegion)))}</span>
-              <span class="dropdown-arrow">▼</span>
-            </button>
-            <div class="texture-dropdown-panel" id="textureDropdownPanel">
-              ${[...TEXTURES].sort((a, b) => a.name.localeCompare(b.name)).map((texture) => `
-                <button class="texture-option${texture.id === regionTexture(item, state.selectedRegion) ? " active" : ""}" data-texture="${escapeAttr(texture.id)}" type="button">
-                  <span class="texture-option-swatch" style="${textureBg(texture.id)}"></span>
-                  <span>${escapeHtml(texture.name)}</span>
-                </button>
-              `).join("")}
-            </div>
-          </div>
-        </div>
+        ${textureSelector.html}
       </label>
       <p class="label">Para eliminar una zona, borra su linea en el campo Zonas. Sus celdas vuelven a la primera zona.</p>
     `;
-    const texturePreview = document.getElementById("texturePreview");
-    const trigger = document.getElementById("textureDropdownTrigger");
-    const panel = document.getElementById("textureDropdownPanel");
-    const triggerLabel = document.getElementById("textureTriggerLabel");
-    let open = false;
-
-    function setTexture(id) {
-      item.regionTextures[state.selectedRegion] = id;
-      applyTexturePreview(texturePreview, id);
-      const swatch = trigger.querySelector(".texture-dropdown-trigger-swatch");
-      applyTexturePreview(swatch, id);
-      triggerLabel.textContent = textureName(id);
-      panel.querySelectorAll(".texture-option").forEach((opt) => opt.classList.toggle("active", opt.dataset.texture === id));
-      saveCases();
-      renderBoard();
-      renderZoneLegend();
-      setStatus(els.editorStatus, "Textura de zona actualizada.", "success");
-    }
-
-    function previewTexture(id) {
-      applyTexturePreview(texturePreview, id);
-    }
-
-    function openPanel() {
-      open = true;
-      panel.classList.add("open");
-    }
-
-    function closePanel() {
-      open = false;
-      panel.classList.remove("open");
-    }
-
-    function onEditorClick(e) {
-      if (open && !e.target.closest(".texture-dropdown-wrap")) {
-        closePanel();
-      }
-    }
-
-    trigger?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (open) closePanel(); else openPanel();
-    });
-
-    panel?.querySelectorAll(".texture-option").forEach((opt) => {
-      opt.addEventListener("mouseenter", () => previewTexture(opt.dataset.texture));
-      opt.addEventListener("click", () => {
-        setTexture(opt.dataset.texture);
-        closePanel();
-      });
-    });
-
+    const onEditorClick = textureSelector.mount();
     els.editorTools.addEventListener("click", onEditorClick);
   } else if (state.editorMode === "object") {
     els.editorRegionBar.innerHTML = "";
+    const objectSelector = createDropdown({
+      id: "object",
+      options: OBJECTS,
+      getId: (o) => o.id,
+      getLabel: (o) => o.name,
+      swatchHtml: (id) => {
+        const obj = findObject(id);
+        const e = obj?.png ? "png" : "svg";
+        return `<img src="assets/objects/${escapeAttr(id)}.${e}" alt="" style="max-width:100%;max-height:100%;display:block;">`;
+      },
+      emptyLabel: "sin objeto",
+      emptySwatchHtml: `<span style="display:block;width:20px;height:16px;border:1px dashed var(--line);border-radius:3px;"></span>`,
+      value: state.selectedObject,
+      sortByName: true,
+      onChange: (id) => {
+        state.selectedObject = id;
+        if (id) {
+          const obj = findObject(id);
+          if (obj) {
+            if (obj.w) state.selectedObjectW = obj.w;
+            if (obj.h) state.selectedObjectH = obj.h;
+          }
+        }
+        renderEditorTools();
+      },
+    });
+
     els.editorTools.innerHTML = `
       <div class="object-controls">
         <div class="field">
@@ -539,35 +628,14 @@ export function renderEditorTools() {
           <span>Bloqueado (no se puede ocupar)</span>
         </label>
       </div>
-      <div class="object-palette">
-        <button class="object-button ${!state.selectedObject ? "active" : ""}" data-object="" type="button">
-          <span class="object-button-icon empty-object-icon"></span>
-          <span>sin objeto</span>
-        </button>
-        ${OBJECTS.map((obj) => {
-          const id = obj.id;
-          const active = state.selectedObject === id;
-          return `
-          <button class="object-button ${active ? "active" : ""}" data-object="${escapeAttr(id)}" type="button">
-            <span class="object-button-icon"><img src="assets/objects/${escapeAttr(id)}.${obj.png ? "png" : "svg"}" alt="" draggable="false" class="object-preview-img"></span>
-            <span>${escapeHtml(obj.name)}</span>
-          </button>
-        `}).join("")}
+      <div class="field">
+        <span>Objeto</span>
+        ${objectSelector.html}
       </div>
     `;
-    els.editorTools.querySelectorAll("[data-object]").forEach((button) => {
-      button.addEventListener("click", () => {
-        state.selectedObject = button.dataset.object;
-        if (state.selectedObject) {
-          const obj = OBJECTS.find((o) => o.id === state.selectedObject);
-          if (obj) {
-            if (obj.w) state.selectedObjectW = obj.w;
-            if (obj.h) state.selectedObjectH = obj.h;
-          }
-        }
-        renderEditorTools();
-      });
-    });
+    const onEditorClick = objectSelector.mount();
+    els.editorTools.addEventListener("click", onEditorClick);
+
     const rotateLeft = document.getElementById("rotateLeftBtn");
     const rotateRight = document.getElementById("rotateRightBtn");
     const flipBtn = document.getElementById("flipBtn");
@@ -581,7 +649,7 @@ export function renderEditorTools() {
       item.objectRules[state.selectedObject].occupiable = !blockedToggle.checked;
       saveCases();
       renderBoard();
-      setStatus(els.editorStatus, "Estado de objeto actualizado.", "success");
+      editorSuccess("Estado de objeto actualizado.");
     });
     const sizeW = document.getElementById("sizeWSelect");
     const sizeH = document.getElementById("sizeHSelect");
@@ -620,13 +688,14 @@ export function renderEditorTools() {
       item.victim.name = victimToolName.value.trim() || "Victima";
       saveCases();
       renderBoard();
-      setStatus(els.editorStatus, "Victima actualizada.", "success");
+      editorSuccess("Victima actualizada.");
     });
     const victimClueInput = document.getElementById("victimClueInput");
     victimClueInput?.addEventListener("input", () => {
       item.victim.clue = victimClueInput.value.trim();
       saveCases();
-      setStatus(els.editorStatus, "Pista de victima actualizada.", "success");
+      renderBoard();
+      editorSuccess("Pista de victima actualizada.");
     });
     const victimGenderFemale = document.getElementById("victimGenderFemale");
     const victimGenderMale = document.getElementById("victimGenderMale");
@@ -636,7 +705,7 @@ export function renderEditorTools() {
       renderBoard();
       renderSuspectCards();
       renderEditorTools();
-      setStatus(els.editorStatus, `Genero de victima actualizado.`, "success");
+      editorSuccess("Genero de victima actualizado.");
     }
     victimGenderFemale?.addEventListener("click", () => setVictimGender("female"));
     victimGenderMale?.addEventListener("click", () => setVictimGender("male"));
@@ -687,7 +756,7 @@ export function renderEditorTools() {
     murdererSelect?.addEventListener("change", () => {
       item.murderer = murdererSelect.value;
       saveCases();
-      setStatus(els.editorStatus, "Asesino actualizado.", "success");
+      editorSuccess("Asesino actualizado.");
     });
   }
 }

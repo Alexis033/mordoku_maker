@@ -12,6 +12,7 @@ vi.mock("../src/render.js", () => ({
   cellCanBeOccupied: vi.fn(() => true),
   parseRegionNames: vi.fn((val) => val.split("\n").filter(Boolean)),
   setStatus: vi.fn(),
+  editorSuccess: vi.fn(),
 }));
 
 vi.mock("../src/persist.js", () => ({

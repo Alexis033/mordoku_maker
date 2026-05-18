@@ -2,7 +2,7 @@ import { state, els, currentCase } from "./state.js";
 import { renderBoard, renderPlayPanel, renderSelectedLabel, renderAll, renderHeader, renderCaseSelect, setStatus } from "./render.js";
 import { cellCanBeOccupied } from "./render.js";
 import { persistProgress, saveCases } from "./persist.js";
-import { cellKey, formatSeconds } from "./utils.js";
+import { cellKey, formatSeconds, parseCellKey } from "./utils.js";
 import { cellBlockedByPlacedLine, findLineConflicts } from "./rules.js";
 
 export function elapsedSeconds() {
@@ -41,7 +41,7 @@ function removeExistingPlacement(suspectId) {
 function findBlockedPlacements(item) {
   const blocked = new Set();
   for (const key of Object.keys(state.board)) {
-    const [row, col] = key.split(",").map(Number);
+    const { row, col } = parseCellKey(key);
     if (!cellCanBeOccupied(item, row, col)) blocked.add(key);
   }
   return blocked;
@@ -119,7 +119,7 @@ export function verifyBoard() {
 
   for (const [key, suspectId] of Object.entries(state.board)) {
     placed += 1;
-    const [row, col] = key.split(",").map(Number);
+    const { row, col } = parseCellKey(key);
     const expected = item.solution[suspectId];
     const isCorrect = expected && expected.row === row && expected.col === col && !blocked.has(key);
     cells[key] = isCorrect ? "correct" : "wrong";
