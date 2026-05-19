@@ -797,7 +797,7 @@ h2 {
   color: #8e2b1e;
   font-weight: 900;
   background: rgba(255,255,255,.42);
-  z-index: 1;
+  z-index: 3;
 }
 
 .occupiable-object {
@@ -882,7 +882,7 @@ h2 {
   min-width: 0;
   pointer-events: none;
   position: relative;
-  z-index: 2;
+  z-index: 4;
 }
 
 .avatar {

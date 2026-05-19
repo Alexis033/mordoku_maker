@@ -230,6 +230,10 @@ export function renderBoard() {
       if (checkMap[key]) button.classList.add(checkMap[key]);
       const draftId = state.mode === "play" && !state.board[key] ? state.draft[key] : null;
       if (draftId) button.classList.add("cell-draft");
+      const mainObj = item.objects[key];
+      if (mainObj && typeof mainObj === "object" && !mainObj.ref && ((mainObj.w || 1) > 1 || (mainObj.h || 1) > 1)) {
+        button.style.zIndex = "2";
+      }
       const zoneLabel = labeledZones.has(region) ? "" : (labeledZones.add(region), regionName(item, region));
       button.innerHTML = cellHtml(item, row, col, zoneLabel, draftId);
       els.board.appendChild(button);
