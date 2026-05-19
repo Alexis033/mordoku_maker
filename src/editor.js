@@ -365,6 +365,7 @@ export function loadCurrentCase(id) {
   const progress = readJson(PROGRESS_KEY) || {};
   const current = progress[id] || {};
   state.board = uniqueBoardPlacements(current.board || {});
+  state.draft = current.draft || {};
   state.victimGuess = current.victimGuess || "";
   state.elapsedBeforePause = current.elapsed || 0;
   state.startedAt = null;

@@ -12,6 +12,17 @@
   --cell: 68px;
 }
 
+@property --pie-progress {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes pie-fill {
+  from { --pie-progress: 0deg; }
+  to { --pie-progress: 360deg; }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -638,6 +649,7 @@ h2 {
   min-width: 0;
   border: 0;
   border-radius: 0;
+  touch-action: manipulation;
   color: var(--ink);
   background: var(--region-color, #f9f8ef);
   background-size: var(--cell) var(--cell);
@@ -646,6 +658,22 @@ h2 {
   outline: 1px solid rgba(17,23,25,.16);
   outline-offset: -1px;
   padding: 4px;
+}
+
+.press-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--cell) * 0.6);
+  height: calc(var(--cell) * 0.6);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: conic-gradient(var(--ring-color, var(--accent)) var(--pie-progress), transparent var(--pie-progress));
+  -webkit-mask: radial-gradient(circle, transparent 35%, #fff 38%);
+  mask: radial-gradient(circle, transparent 35%, #fff 38%);
+  animation: pie-fill 600ms linear forwards;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .cell::before {
@@ -1069,6 +1097,15 @@ h2 {
   inset: 0;
   opacity: 0;
   cursor: pointer;
+}
+
+.cell-draft .person-name {
+  opacity: .45;
+}
+
+.cell-draft .avatar {
+  opacity: .45;
+  border-style: dashed;
 }
 
 @media (max-width: 920px) {

@@ -1,7 +1,7 @@
 import { state, els, currentCase } from "./src/state.js";
 import { renderAll, renderBoard, renderPlayPanel, renderBoardSize, setStatus } from "./src/render.js";
 import { renderEditorTools, renderEditorModeButtons } from "./src/render.js";
-import { handleCellClick, verifyBoard, resetProgress, clearBoardPieces, elapsedSeconds } from "./src/game.js";
+import { handleCellClick, lockCellPlacement, verifyBoard, resetProgress, clearBoardPieces, elapsedSeconds } from "./src/game.js";
 import { updateCaseTextFields, updateCaseSuspects, updateCaseClues, updateCaseGenders, updateCaseRegions, updateCaseDimensions } from "./src/editor.js";
 import { saveEditorCase, createNewCase, generateNewCase, duplicateCase, deleteCase, exportCurrentCase, importCase } from "./src/editor.js";
 import { editCell, loadCurrentCase, switchMode } from "./src/editor.js";
@@ -45,16 +45,73 @@ function bindEvents() {
   });
   els.resetBtn.addEventListener("click", resetProgress);
   els.zoomRange.addEventListener("input", () => renderBoardSize());
-  els.board.addEventListener("click", (e) => {
+  let _pressedCell = null;
+
+  function cancelLongPress() {
+    if (!_pressedCell) return;
+    const ring = _pressedCell.querySelector(".press-ring");
+    if (ring) ring.remove();
+    _pressedCell.classList.remove("cell-pressing");
+    if (_pressedCell._longPressTimer) {
+      clearTimeout(_pressedCell._longPressTimer);
+      _pressedCell._longPressTimer = null;
+    }
+    _pressedCell._longPressFired = false;
+    _pressedCell = null;
+  }
+
+  els.board.addEventListener("pointerdown", (e) => {
+    const cell = e.target.closest(".cell");
+    if (!cell || state.mode !== "play") return;
+    _pressedCell = cell;
+    cell._startX = e.clientX;
+    cell._startY = e.clientY;
+    if (!state.selectedSuspect || state.selectedSuspect === "__victim__") return;
+    cell.classList.add("cell-pressing");
+    const suspect = currentCase().suspects.find((s) => s.id === state.selectedSuspect);
+    const ring = document.createElement("span");
+    ring.className = "press-ring";
+    ring.style.setProperty("--ring-color", suspect?.color || "var(--accent)");
+    cell.appendChild(ring);
+    cell._longPressTimer = setTimeout(() => {
+      const r = cell.querySelector(".press-ring");
+      if (r) r.remove();
+      cell.classList.remove("cell-pressing");
+      cell._longPressFired = true;
+      lockCellPlacement(Number(cell.dataset.row), Number(cell.dataset.col), state.selectedSuspect);
+    }, 600);
+  });
+  els.board.addEventListener("pointermove", (e) => {
+    if (!_pressedCell) return;
+    const dx = e.clientX - (_pressedCell._startX || 0);
+    const dy = e.clientY - (_pressedCell._startY || 0);
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      cancelLongPress();
+    }
+  });
+  els.board.addEventListener("pointercancel", cancelLongPress);
+  els.board.addEventListener("pointerup", (e) => {
     const cell = e.target.closest(".cell");
     if (!cell) return;
     const row = Number(cell.dataset.row);
     const col = Number(cell.dataset.col);
     if (state.mode === "editor") {
       editCell(row, col);
-    } else {
-      handleCellClick(row, col);
+      return;
     }
+    if (cell._longPressFired) {
+      cell._longPressFired = false;
+      return;
+    }
+    if (cell !== _pressedCell) {
+      const ring = cell.querySelector(".press-ring");
+      if (ring) ring.remove();
+      cell.classList.remove("cell-pressing");
+      cancelLongPress();
+      return;
+    }
+    cancelLongPress();
+    handleCellClick(row, col);
   });
   let hoverKey = null;
   function highlightZone(row, col) {

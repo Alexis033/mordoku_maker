@@ -12,6 +12,7 @@ export const state = {
   selectedObjectH: 1,
   editorMode: "region",
   board: {},
+  draft: {},
   victimGuess: "",
   lastCheck: null,
   lastSavedCases: null,

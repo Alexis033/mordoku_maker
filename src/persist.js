@@ -9,6 +9,7 @@ export function persistProgress(elapsed) {
   const all = readJson(PROGRESS_KEY) || {};
   all[state.caseId] = {
     board: state.board,
+    draft: state.draft,
     victimGuess: state.victimGuess,
     elapsed
   };

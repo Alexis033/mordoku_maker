@@ -18,7 +18,7 @@ vi.mock("../src/persist.js", () => ({
 }));
 
 import { state, els } from "../src/state.js";
-import { handleCellClick, resetProgress, clearBoardPieces } from "../src/game.js";
+import { handleCellClick, lockCellPlacement, resetProgress, clearBoardPieces } from "../src/game.js";
 
 function makeCase(overrides = {}) {
   return {
@@ -50,6 +50,7 @@ beforeEach(() => {
   state.caseId = "test-case";
   state.mode = "play";
   state.board = {};
+  state.draft = {};
   state.victimGuess = "";
   state.selectedSuspect = null;
   state.lastCheck = null;
@@ -70,25 +71,26 @@ describe("handleCellClick", () => {
     expect(state.board).toEqual({});
   });
 
-  it("places suspect on free cell", () => {
+  it("places suspect on free cell as draft", () => {
     state.selectedSuspect = "ana";
     handleCellClick(1, 1);
-    expect(state.board["1,1"]).toBe("ana");
-  });
-
-  it("moves suspect when clicking a different cell", () => {
-    state.selectedSuspect = "ana";
-    state.board["0,0"] = "ana";
-    handleCellClick(1, 1);
-    expect(state.board["0,0"]).toBeUndefined();
-    expect(state.board["1,1"]).toBe("ana");
-  });
-
-  it("removes suspect when clicking same cell again", () => {
-    state.selectedSuspect = "ana";
-    state.board["1,1"] = "ana";
-    handleCellClick(1, 1);
+    expect(state.draft["1,1"]).toBe("ana");
     expect(state.board["1,1"]).toBeUndefined();
+  });
+
+  it("places same suspect in multiple draft cells", () => {
+    state.selectedSuspect = "ana";
+    state.draft["0,0"] = "ana";
+    handleCellClick(1, 1);
+    expect(state.draft["0,0"]).toBe("ana");
+    expect(state.draft["1,1"]).toBe("ana");
+  });
+
+  it("removes draft suspect when clicking same cell again", () => {
+    state.selectedSuspect = "ana";
+    state.draft["1,1"] = "ana";
+    handleCellClick(1, 1);
+    expect(state.draft["1,1"]).toBeUndefined();
   });
 
   it("places victim", () => {
@@ -110,11 +112,65 @@ describe("handleCellClick", () => {
     handleCellClick(2, 2);
     expect(state.victimGuess).toBe("");
   });
+  it("can lock draft placement", () => {
+    lockCellPlacement(1, 1, "ana");
+    expect(state.board["1,1"]).toBe("ana");
+    expect(state.draft["1,1"]).toBeUndefined();
+    expect(state.selectedSuspect).toBeNull();
+  });
+
+  it("lock clears same row and column suspects from board", () => {
+    state.board["1,0"] = "bruno";
+    state.board["0,1"] = "bruno";
+    lockCellPlacement(1, 1, "ana");
+    expect(state.board["1,1"]).toBe("ana");
+    expect(state.board["1,0"]).toBeUndefined();
+    expect(state.board["0,1"]).toBeUndefined();
+  });
+
+  it("lock removes victim from same row", () => {
+    state.victimGuess = "1,0";
+    lockCellPlacement(1, 1, "ana");
+    expect(state.victimGuess).toBe("");
+    expect(state.board["1,1"]).toBe("ana");
+  });
+
+  it("lock removes other drafts of same suspect", () => {
+    state.draft["0,0"] = "ana";
+    state.draft["2,2"] = "ana";
+    lockCellPlacement(1, 1, "ana");
+    expect(state.board["1,1"]).toBe("ana");
+    expect(state.draft["0,0"]).toBeUndefined();
+    expect(state.draft["2,2"]).toBeUndefined();
+  });
+
+  it("lock removes drafts on same row or column", () => {
+    state.draft["1,0"] = "bruno";
+    state.draft["0,1"] = "bruno";
+    lockCellPlacement(1, 1, "ana");
+    expect(state.board["1,1"]).toBe("ana");
+    expect(state.draft["1,0"]).toBeUndefined();
+    expect(state.draft["0,1"]).toBeUndefined();
+  });
+
+  it("does nothing when locking with no suspectId", () => {
+    lockCellPlacement(2, 2);
+    expect(state.board).toEqual({});
+    expect(state.draft).toEqual({});
+  });
+
+  it("locks selected suspect, not draft at cell", () => {
+    state.draft["1,1"] = "bruno";
+    lockCellPlacement(1, 1, "ana");
+    expect(state.board["1,1"]).toBe("ana");
+    expect(state.draft["1,1"]).toBeUndefined();
+  });
 });
 
 describe("resetProgress", () => {
   it("clears all play state", () => {
     state.board = { "0,0": "ana" };
+    state.draft = { "1,1": "bruno" };
     state.victimGuess = "2,2";
     state.elapsedBeforePause = 500;
     state.lastCheck = { cells: {} };
@@ -123,6 +179,7 @@ describe("resetProgress", () => {
     resetProgress();
 
     expect(state.board).toEqual({});
+    expect(state.draft).toEqual({});
     expect(state.victimGuess).toBe("");
     expect(state.elapsedBeforePause).toBe(0);
     expect(state.lastCheck).toBeNull();
@@ -131,14 +188,16 @@ describe("resetProgress", () => {
 });
 
 describe("clearBoardPieces", () => {
-  it("clears board and victim but keeps timer", () => {
+  it("clears board, draft, and victim but keeps timer", () => {
     state.board = { "0,0": "ana" };
+    state.draft = { "1,1": "bruno" };
     state.victimGuess = "2,2";
     state.lastCheck = { cells: {} };
 
     clearBoardPieces();
 
     expect(state.board).toEqual({});
+    expect(state.draft).toEqual({});
     expect(state.victimGuess).toBe("");
     expect(state.lastCheck).toBeNull();
   });

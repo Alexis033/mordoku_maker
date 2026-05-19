@@ -154,9 +154,9 @@ export function cellCanBeOccupied(item, row, col) {
   return objectCanBeOccupied(item, id);
 }
 
-export function cellHtml(item, row, col, zoneLabel) {
+export function cellHtml(item, row, col, zoneLabel, draft) {
   const key = cellKey(row, col);
-  const suspectId = state.reveal ? solutionAt(item, row, col) : (state.mode === "editor" && state.editorMode === "solution" ? solutionAt(item, row, col) : state.board[key]);
+  const suspectId = state.reveal ? solutionAt(item, row, col) : (state.mode === "editor" && state.editorMode === "solution" ? solutionAt(item, row, col) : draft || state.board[key]);
   const suspect = item.suspects.find((entry) => entry.id === suspectId);
   const rawObject = item.objects[key];
   const object = !rawObject ? null : rawObject.ref ? null : typeof rawObject === "string" ? { id: rawObject, color: null, rotation: 0 } : rawObject;
@@ -164,6 +164,7 @@ export function cellHtml(item, row, col, zoneLabel) {
   const victimKey = state.reveal ? cellKey(item.victim.row, item.victim.col) : state.victimGuess;
   const hasVictim = (state.mode === "editor" && item.victim.row === row && item.victim.col === col) ||
     (state.mode === "play" && victimKey === key);
+  const isDraft = !state.reveal && state.mode === "play" && draft && !state.board[key];
   let objStyle = object?.rotation ? `--obj-rotation:${object.rotation}deg;` : "";
   if (object) {
     const { w, h } = getObjectSize(object);
@@ -180,7 +181,7 @@ export function cellHtml(item, row, col, zoneLabel) {
     ${object ? `<span class="cell-object ${blocked ? "blocked-object" : "occupiable-object"}" title="${escapeAttr(objectLabel(item, object.id))}"${objStyle ? ` style="${objStyle}"` : ""}>${objectIcon(object.id, object.color)}</span>` : ""}
     ${hasVictim ? `<span class="cell-victim">${escapeHtml((item.victim.name || "V").slice(0, 1))}</span>` : ""}
     ${suspect ? `
-      <span class="cell-person">
+      <span class="cell-person${isDraft ? " person-draft" : ""}">
         <span class="avatar" style="--avatar:${escapeAttr(suspect.color)}"></span>
         <span class="person-name">${escapeHtml(suspect.name)}</span>
       </span>
@@ -227,12 +228,14 @@ export function renderBoard() {
       if (unavailable.has(key)) button.classList.add("unavailable");
       if (conflicts.has(key)) button.classList.add("conflict");
       if (checkMap[key]) button.classList.add(checkMap[key]);
+      const draftId = state.mode === "play" && !state.board[key] ? state.draft[key] : null;
+      if (draftId) button.classList.add("cell-draft");
       const mainObj = item.objects[key];
       if (mainObj && typeof mainObj === "object" && !mainObj.ref && ((mainObj.w || 1) > 1 || (mainObj.h || 1) > 1)) {
         button.style.zIndex = "2";
       }
       const zoneLabel = labeledZones.has(region) ? "" : (labeledZones.add(region), regionName(item, region));
-      button.innerHTML = cellHtml(item, row, col, zoneLabel);
+      button.innerHTML = cellHtml(item, row, col, zoneLabel, draftId);
       els.board.appendChild(button);
     }
   }
