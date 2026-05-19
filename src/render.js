@@ -239,7 +239,8 @@ export function renderBoard() {
       const isMultiAnchor = rawObject && typeof rawObject === "object" && !rawObject.ref && ((rawObject.w || 1) > 1 || (rawObject.h || 1) > 1);
       const cellObjId = rawObject && !isMultiAnchor && !rawObject.ref ? (rawObject.id || rawObject) : "";
       const checkClass = checkMap[key] || "";
-      const newState = `${suspectId || ""}|${draftId || ""}|${hasVictim ? "v" : ""}|${unavailable.has(key) ? "u" : ""}|${conflicts.has(key) ? "c" : ""}|${checkClass}|${cellObjId}`;
+      const borderClasses = cellBorderClasses(item, row, col, region).sort().join(" ");
+      const newState = `${suspectId || ""}|${draftId || ""}|${hasVictim ? "v" : ""}|${unavailable.has(key) ? "u" : ""}|${conflicts.has(key) ? "c" : ""}|${checkClass}|${cellObjId}|${region}|${borderClasses}`;
 
       if (firstRender) {
         const button = document.createElement("button");
@@ -264,6 +265,11 @@ export function renderBoard() {
         if (!button) continue;
         if (button.dataset.renderState === newState) continue;
         button.innerHTML = cellHtml(item, row, col, zoneLabel, draftId);
+        button.style.setProperty("--region-color", COLORS[region % COLORS.length]);
+        { const texId = regionTexture(item, region); button.classList.remove("texture-plain"); button.style.backgroundImage = ""; if (texId === "plain") { button.classList.add("texture-plain"); } else { const url = textureUrlFor(texId); if (url) button.style.backgroundImage = `url(${url})`; } }
+        button.className = button.className.split(" ").filter(c => !c.startsWith("zone-") && !c.startsWith("edge-")).join(" ");
+        button.classList.add(...cellBorderClasses(item, row, col, region));
+        button.title = regionName(item, region);
         button.classList.toggle("unavailable", unavailable.has(key));
         button.classList.toggle("conflict", conflicts.has(key));
         button.classList.toggle("cell-draft", !!draftId);
