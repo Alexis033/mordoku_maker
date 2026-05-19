@@ -260,14 +260,14 @@ export function renderSuspectCards() {
   const item = currentCase();
   const victimCard = `
     <button class="suspect-card${state.selectedSuspect === "__victim__" ? " active" : ""}" data-victim-piece="true" type="button">
-      <div class="card-photo card-photo-victim" style="border-color:${escapeAttr(item.victim.color || "#dbb0a8")}">${item.victim.gender === "male" ? MALE_SVG : FEMALE_SVG}</div>
+      <div class="card-photo card-photo-victim" style="color:${escapeAttr(item.victim.color || "#c87868")}">${item.victim.gender === "male" ? MALE_SVG : FEMALE_SVG}</div>
       <div class="card-name">${escapeHtml(item.victim.name || "Victima")}</div>
       ${item.victim.clue ? `<div class="card-clue">${escapeHtml(item.victim.clue)}</div>` : ""}
     </button>
   `;
   const suspectCards = item.suspects.map((suspect) => `
     <button class="suspect-card${state.selectedSuspect === suspect.id ? " active" : ""}" data-suspect="${escapeAttr(suspect.id)}" type="button">
-      <div class="card-photo" style="border-color:${suspect.color}">${suspect.gender === "female" ? FEMALE_SVG : MALE_SVG}</div>
+      <div class="card-photo" style="color:${escapeAttr(suspect.color)}">${suspect.gender === "female" ? FEMALE_SVG : MALE_SVG}</div>
       <div class="card-name">${escapeHtml(suspect.name)}</div>
       ${suspect.clue ? `<div class="card-clue">${escapeHtml(suspect.clue)}</div>` : ""}
     </button>
