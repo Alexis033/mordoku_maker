@@ -26,7 +26,7 @@ vi.mock("../src/game.js", () => ({
 import { state, currentCase } from "../src/state.js";
 import { editCell } from "../src/editor.js";
 import { saveCases } from "../src/persist.js";
-import { renderBoard } from "../src/render.js";
+import { renderBoard, cellCanBeOccupied } from "../src/render.js";
 
 function makeCase(overrides = {}) {
   return {
@@ -172,5 +172,12 @@ describe("editCell — solution mode", () => {
     state.selectedSuspect = "ana";
     editCell(1, 1);
     expect(currentCase().solution.ana).toEqual({ row: 1, col: 1 });
+  });
+  it("rejects solution on cell with blocked object", () => {
+    cellCanBeOccupied.mockReturnValueOnce(false);
+    state.editorMode = "solution";
+    state.selectedSuspect = "ana";
+    editCell(1, 1);
+    expect(currentCase().solution.ana).toBeUndefined();
   });
 });
