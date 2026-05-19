@@ -632,6 +632,7 @@ h2 {
 }
 
 .board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--cell));
   grid-auto-rows: var(--cell);
@@ -755,7 +756,7 @@ h2 {
 
 
 .cell:hover {
-  filter: saturate(1.04) brightness(.98);
+  outline: 2px solid rgba(17,23,25,.35);
 }
 
 .cell.conflict {
@@ -806,6 +807,11 @@ h2 {
 
 .blocked-object {
   background: rgba(220,80,60,.35);
+}
+
+.board-object {
+  position: absolute;
+  z-index: 2;
 }
 
 .cell-object {
