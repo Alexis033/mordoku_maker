@@ -759,6 +759,10 @@ h2 {
   outline: 2px solid rgba(17,23,25,.35);
 }
 
+.cell.blocked {
+  box-shadow: inset 0 0 0 999px rgba(180,70,56,.08);
+}
+
 .cell.conflict {
   box-shadow: inset 0 0 0 4px rgba(180,70,56,.72);
 }

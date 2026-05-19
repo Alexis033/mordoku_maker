@@ -105,6 +105,14 @@ export function handleCellClick(row, col) {
     setStatus(els.statusBox, "Esa celda tiene un sospechoso fijado. Quitalo antes de colocar otro.", "warning");
     return;
   }
+  if (cellBlockedByPlacedLine({
+    board: state.board, cellKey,
+    row, col, movingPiece: state.selectedSuspect,
+    victimGuess: state.victimGuess
+  })) {
+    setStatus(els.statusBox, "No puedes colocar un sospechoso en una fila o columna ya ocupada.", "warning");
+    return;
+  }
   if (state.draft[key] === state.selectedSuspect) {
     delete state.draft[key];
   } else {
@@ -120,6 +128,11 @@ export function handleCellClick(row, col) {
 export function lockCellPlacement(row, col, suspectId) {
   const key = cellKey(row, col);
   if (!suspectId) return;
+  const item = currentCase();
+  if (!cellCanBeOccupied(item, row, col)) {
+    setStatus(els.statusBox, "Esa celda tiene un objeto bloqueado y no puede ocuparse.", "warning");
+    return;
+  }
 
   // Remove all drafts of this suspect
   for (const [k, sid] of Object.entries(state.draft)) {
