@@ -251,7 +251,7 @@ export function renderBoard() {
       const cellObjId = rawObject && !isMultiAnchor && !rawObject.ref ? (rawObject.id || rawObject) : "";
       const checkClass = checkMap[key] || "";
       const borderClasses = cellBorderClasses(item, row, col, region).sort().join(" ");
-      const newState = `${suspectId || ""}|${draftId || ""}|${hasVictim ? "v" : ""}|${unavailable.has(key) ? "u" : ""}|${conflicts.has(key) ? "c" : ""}|${checkClass}|${cellObjId}|${region}|${borderClasses}`;
+      const newState = `${suspectId || ""}|${draftId || ""}|${hasVictim ? "v" : ""}|${unavailable.has(key) ? "u" : ""}|${conflicts.has(key) ? "c" : ""}|${checkClass}|${cellObjId}|${region}|${borderClasses}|${zoneLabel}`;
 
       if (firstRender) {
         const button = document.createElement("button");
